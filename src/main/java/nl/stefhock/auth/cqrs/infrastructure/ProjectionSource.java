@@ -1,7 +1,5 @@
 package nl.stefhock.auth.cqrs.infrastructure;
 
-import nl.stefhock.auth.cqrs.application.consistency.ConsistencyStrategy;
-
 import java.util.Date;
 import java.util.stream.Stream;
 
@@ -22,7 +20,7 @@ public abstract class ProjectionSource<T> {
 
     public abstract Stream<T> stream();
 
-    public SequenceInfo getSequenceInfo() {
+    public SequenceInfo sequenceInfo() {
         return sequenceInfo;
     }
 
@@ -40,7 +38,7 @@ public abstract class ProjectionSource<T> {
             this(0L, new Date());
         }
 
-        public Long getSequenceId() {
+        public Long sequenceId() {
             return sequenceId;
         }
 
@@ -49,7 +47,7 @@ public abstract class ProjectionSource<T> {
             this.sequenceDate = new Date();
         }
 
-        public Date getSequenceDate() {
+        public Date date() {
             return sequenceDate;
         }
     }

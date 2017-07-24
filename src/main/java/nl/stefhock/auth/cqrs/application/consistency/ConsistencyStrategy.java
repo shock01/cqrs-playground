@@ -49,7 +49,7 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
     synchronized ConsistencyStrategy<T> resume() {
 
         if (state != State.SYNCED) {
-            if (state == State.PAUSED) {
+            if (state == State.SUSPENDED) {
                 eventBus.unregister(this);
             }
             // repost events that were missed during sync
@@ -61,12 +61,12 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
         return this;
     }
 
-    synchronized ConsistencyStrategy<T> pause() {
+    synchronized ConsistencyStrategy<T> suspend() {
         if (state == State.SYNCED) {
             eventBus.unregister(instance);
         }
         eventBus.register(this);
-        state = State.PAUSED;
+        state = State.SUSPENDED;
 
         return this;
     }
@@ -91,20 +91,32 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
                     .stream()
                     .forEach(eventBus::post);
         }
-        query.projectionSource().getSequenceInfo().update(storeSequenceId);
+        query.projectionSource().sequenceInfo().update(storeSequenceId);
     }
 
 
     synchronized long eventStoreSequenceId() {
-        return eventStore.getLastSequenceId();
+        return eventStore.sequenceId();
     }
 
-    public String getId() {
+    public String id() {
         return id;
     }
 
     public T query() {
         return query;
+    }
+
+    public State state() {
+        return state;
+    }
+
+    public T instance() {
+        return instance;
+    }
+
+    public EventStore eventStore() {
+        return eventStore;
     }
 
     @Override
@@ -116,11 +128,11 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
                 '}';
     }
 
-    enum State {
+    public enum State {
         UNINITIALIZED,
         INITIALIZED,
         SYNCED,
-        PAUSED
+        SUSPENDED
     }
 
 

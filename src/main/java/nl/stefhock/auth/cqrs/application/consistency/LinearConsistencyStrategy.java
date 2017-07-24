@@ -1,6 +1,5 @@
 package nl.stefhock.auth.cqrs.application.consistency;
 
-import nl.stefhock.auth.app.application.Projections;
 import nl.stefhock.auth.cqrs.application.Projection;
 import nl.stefhock.auth.cqrs.infrastructure.ProjectionSource;
 
@@ -29,12 +28,12 @@ public class LinearConsistencyStrategy<T extends Projection<?>> extends Consiste
 
     @Override
     public synchronized void synchronize() {
-        final ProjectionSource.SequenceInfo info = query().projectionSource().getSequenceInfo();
+        final ProjectionSource.SequenceInfo info = query().projectionSource().sequenceInfo();
         System.out.println("DONE");
-        final long querySequenceId = info.getSequenceId();
+        final long querySequenceId = info.sequenceId();
         final long storeSequenceId = eventStoreSequenceId();
         if (storeSequenceId > querySequenceId) {
-            this.pause();
+            this.suspend();
             if (LOGGER.isLoggable(Level.INFO)) {
                 LOGGER.info(String.format("[%s] sync:, event:%d, store:%d", this, querySequenceId, storeSequenceId));
             }

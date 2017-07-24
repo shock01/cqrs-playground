@@ -69,10 +69,10 @@ public class JdbcEventStoreIT {
 
     @Test
     public void getLastSequenceId() throws Exception {
-        assertEquals(0, subject.getLastSequenceId());
+        assertEquals(0, subject.sequenceId());
         final Aggregate aggregate = new Registration(Id.from(id), "test");
         subject.save(aggregate);
-        assertEquals(1, subject.getLastSequenceId());
+        assertEquals(1, subject.sequenceId());
     }
 
     @Test

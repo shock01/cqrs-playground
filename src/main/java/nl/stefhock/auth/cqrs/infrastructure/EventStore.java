@@ -14,5 +14,5 @@ public interface EventStore {
 
     List<DomainEvent> getEvents(long offset, int limit);
 
-    long getLastSequenceId();
+    long sequenceId();
 }

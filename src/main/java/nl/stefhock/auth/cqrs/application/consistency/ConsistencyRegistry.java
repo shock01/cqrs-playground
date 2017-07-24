@@ -24,7 +24,7 @@ public class ConsistencyRegistry {
     }
 
     public void pauseAll() {
-        strategies.stream().forEach(ConsistencyStrategy::pause);
+        strategies.stream().forEach(ConsistencyStrategy::suspend);
     }
 
     public void resumeAll() {

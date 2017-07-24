@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import nl.stefhock.auth.app.Main;
 import nl.stefhock.auth.app.application.command.RegistrationCommand;
 import nl.stefhock.auth.app.application.command.handler.RegistrationCommandHandler;
 import nl.stefhock.auth.app.application.projection.RegistrationsProjection;

@@ -197,7 +197,7 @@ public class JdbcEventStore implements AggregateRepository, EventStore {
     }
 
     @Override
-    public long getLastSequenceId() {
+    public long sequenceId() {
         long result = 0;
         try (final Connection connection = dataSource.getConnection()) {
 
