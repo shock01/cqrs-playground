@@ -9,9 +9,14 @@ import java.util.stream.Stream;
 public abstract class ProjectionSource<T> {
 
     private final SequenceInfo sequenceInfo;
+    private final String name;
 
-    protected ProjectionSource() {
+    protected ProjectionSource(String name) {
+        this.name = name;
         sequenceInfo = new SequenceInfo();
+    }
+
+    public void initialize() {
     }
 
     public abstract void tryDelete(T entity);
@@ -24,6 +29,21 @@ public abstract class ProjectionSource<T> {
         return sequenceInfo;
     }
 
+    public void synced(Long sequenceId) {
+        sequenceInfo.update(sequenceId);
+    }
+
+    public String name() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return "ProjectionSource{" +
+                "sequenceInfo=" + sequenceInfo +
+                ", name='" + name + '\'' +
+                '}';
+    }
 
     public static class SequenceInfo {
         private Long sequenceId;
@@ -42,7 +62,7 @@ public abstract class ProjectionSource<T> {
             return sequenceId;
         }
 
-        public void update(Long sequenceId) {
+        void update(Long sequenceId) {
             this.sequenceId = sequenceId;
             this.sequenceDate = new Date();
         }

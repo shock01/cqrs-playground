@@ -87,11 +87,15 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
             if (LOGGER.isLoggable(Level.INFO)) {
                 LOGGER.info(String.format("[%s] getting events from store: offset:%d, limit:%d", this, offset, chunkSize));
             }
-            eventStore.getEvents(offset, chunkSize)
-                    .stream()
-                    .forEach(eventBus::post);
+            try {
+                eventStore.getEvents(offset, chunkSize)
+                        .stream()
+                        .forEach(eventBus::post);
+            } catch (Exception e) {
+                System.out.print(e);
+            }
         }
-        query.projectionSource().sequenceInfo().update(storeSequenceId);
+        query.projectionSource().synced(storeSequenceId);
     }
 
 

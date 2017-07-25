@@ -5,6 +5,7 @@ package nl.stefhock.auth.app;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.hazelcast.core.HazelcastInstance;
 import nl.stefhock.auth.app.application.ApplicationModule;
 import nl.stefhock.auth.app.application.command.RegistrationCommand;
 import nl.stefhock.auth.app.domain.DomainModule;
@@ -39,6 +40,8 @@ public class Main {
         final URI baseUri = UriBuilder.fromUri("http://localhost").port(9000).build();
         final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, resourceConfig, false);
         final StaticHttpHandler staticHttpHandler = new StaticHttpHandler("ui");
+        // @fixme for production enable this again
+        staticHttpHandler.setFileCacheEnabled(false);
         server.getServerConfiguration().addHttpHandler(staticHttpHandler, "/ui");
 
         // dumb insert
@@ -54,6 +57,9 @@ public class Main {
         }
         // @todo we should sync all the BaseProjection on start up maybe..
         // or have a policy if it should (Strategy)
+        // start hazelcast
+        injector.getInstance(HazelcastInstance.class);
+
         Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
         server.start();
         Thread.currentThread().join();

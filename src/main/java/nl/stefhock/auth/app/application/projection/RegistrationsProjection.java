@@ -2,6 +2,9 @@ package nl.stefhock.auth.app.application.projection;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.eventbus.Subscribe;
+import com.hazelcast.nio.ObjectDataInput;
+import com.hazelcast.nio.ObjectDataOutput;
+import com.hazelcast.nio.serialization.DataSerializable;
 import nl.stefhock.auth.app.application.Projections;
 import nl.stefhock.auth.app.domain.events.RegistrationCreatedEvent;
 import nl.stefhock.auth.cqrs.application.BaseProjection;
@@ -9,6 +12,7 @@ import nl.stefhock.auth.cqrs.application.Consistency;
 import nl.stefhock.auth.cqrs.infrastructure.ProjectionSource;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Optional;
@@ -93,7 +97,12 @@ public class RegistrationsProjection extends BaseProjection<RegistrationsProject
 
     @Override
     public Set<Registration> list() {
-        return projectionSource().stream().sorted(SORT_BY_EMAIL).collect(Collectors.toSet());
+        try {
+            return projectionSource().stream().sorted(SORT_BY_EMAIL).collect(Collectors.toSet());
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
     }
 
     @Override
@@ -120,14 +129,20 @@ public class RegistrationsProjection extends BaseProjection<RegistrationsProject
         }
     }
 
-    public static class Registration {
+    // may also use IdentifiedDataSerializable or Portable which need to be setup in InfrastructureModule.class
+    // however the class is really small and might not need to be made this complex if needed it can always be added
+    public static class Registration implements DataSerializable {
 
         @JsonProperty
-        private final String email;
+        private Date registrationDate;
         @JsonProperty
-        private final Date registrationDate;
+        private String email;
         @JsonProperty
-        private final String uuid;
+        private String uuid;
+
+        public Registration() {
+
+        }
 
         Registration(String email, Date registrationDate, String uuid) {
             this.email = email;
@@ -145,6 +160,20 @@ public class RegistrationsProjection extends BaseProjection<RegistrationsProject
 
         Date getRegistrationDate() {
             return registrationDate;
+        }
+
+        @Override
+        public void writeData(ObjectDataOutput out) throws IOException {
+            out.writeUTF(uuid);
+            out.writeUTF(email);
+            out.writeLong(registrationDate.getTime());
+        }
+
+        @Override
+        public void readData(ObjectDataInput in) throws IOException {
+            uuid = in.readUTF();
+            email = in.readUTF();
+            registrationDate = new Date(in.readLong());
         }
     }
 }

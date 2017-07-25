@@ -11,7 +11,7 @@ import java.util.logging.Logger;
  * Created by hocks on 17-7-2017.
  * <p>
  * linear consistency will always fetch the latest version from the event store
- * and will update when the event is behind
+ * and will synced when the event is behind
  */
 public class LinearConsistencyStrategy<T extends Projection<?>> extends ConsistencyStrategy<T> {
 
@@ -28,8 +28,8 @@ public class LinearConsistencyStrategy<T extends Projection<?>> extends Consiste
 
     @Override
     public synchronized void synchronize() {
+
         final ProjectionSource.SequenceInfo info = query().projectionSource().sequenceInfo();
-        System.out.println("DONE");
         final long querySequenceId = info.sequenceId();
         final long storeSequenceId = eventStoreSequenceId();
         if (storeSequenceId > querySequenceId) {

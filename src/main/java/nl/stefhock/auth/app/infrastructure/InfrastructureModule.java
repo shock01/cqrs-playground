@@ -3,9 +3,15 @@ package nl.stefhock.auth.app.infrastructure;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.JoinConfig;
+import com.hazelcast.config.NetworkConfig;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 import com.zaxxer.hikari.HikariDataSource;
 import nl.stefhock.auth.app.DbMigration;
 import nl.stefhock.auth.app.application.Configuration;
+import nl.stefhock.auth.app.application.projection.RegistrationsProjection;
 import nl.stefhock.auth.app.infrastructure.eventstore.jdbc.JdbcEventStore;
 import nl.stefhock.auth.cqrs.application.EventBus;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateRepository;
@@ -50,4 +56,23 @@ public class InfrastructureModule extends AbstractModule {
 
         return hikariDataSource;
     }
+
+    @Provides
+    @Singleton
+    public HazelcastInstance hazelcastInstance() {
+        // https://blog.hazelcast.com/comparing-serialization-methods/
+        final Config config = new Config();
+        config.getNetworkConfig().setPort(5900);
+        config.getNetworkConfig().setPortAutoIncrement(false);
+//        config.getSerializationConfig().addDataSerializableFactory
+//                (1, (int id) -> (id == RegistrationsProjection.Registration.ID) ? new RegistrationsProjection.Registration() : null);
+        final NetworkConfig network = config.getNetworkConfig();
+        JoinConfig join = network.getJoin();
+        join.getMulticastConfig().setEnabled(false);
+        join.getTcpIpConfig().setEnabled(true);
+
+        return Hazelcast.newHazelcastInstance(config);
+    }
+
+
 }

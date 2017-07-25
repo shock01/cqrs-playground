@@ -38,6 +38,7 @@ dependencies {
     compile 'com.zaxxer:HikariCP:2+'
     compile 'com.h2database:h2:1.4.193'
     compile 'org.flywaydb:flyway-core:4.0.3'
+    compile 'com.hazelcast:hazelcast:3.8-EA'
     compile group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.25'
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
 
