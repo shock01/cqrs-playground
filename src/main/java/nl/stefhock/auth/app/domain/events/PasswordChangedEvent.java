@@ -1,7 +1,7 @@
 package nl.stefhock.auth.app.domain.events;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import nl.stefhock.auth.cqrs.domain.DomainEvent;
+import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 
 import java.util.Date;
 

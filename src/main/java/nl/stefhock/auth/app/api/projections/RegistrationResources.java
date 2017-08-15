@@ -11,6 +11,7 @@ import javax.validation.Valid;
 import javax.validation.executable.ValidateOnExecution;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -32,7 +33,7 @@ public class RegistrationResources {
 
     /**
      * returns status see other with a link to the user registration
-     * this is needed to be able to separate the query from the commands
+     * this is needed to be able to separate the projection from the commands
      *
      * @param registration
      * @return
@@ -52,13 +53,11 @@ public class RegistrationResources {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response list(@PathParam("uuid") String uuid) {
-        final GenericEntity<Set<RegistrationsProjection.Registration>> list = new GenericEntity<Set<RegistrationsProjection.Registration>>(registrationsProjection.list()) {
+        GenericEntity<List<RegistrationsProjection.Registration>> list = new GenericEntity<List<RegistrationsProjection.Registration>>(registrationsProjection.list()) {
         };
         return Response.ok().entity(list).build();
     }
 
-    // should call registrationQuery instead !!!!
-    // @fixme
     @Path("/account/{uuid}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)

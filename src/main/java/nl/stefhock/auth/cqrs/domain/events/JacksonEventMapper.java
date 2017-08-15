@@ -1,10 +1,8 @@
-package nl.stefhock.auth.app.domain.events;
+package nl.stefhock.auth.cqrs.domain.events;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
-import nl.stefhock.auth.cqrs.domain.DomainEvent;
-import nl.stefhock.auth.cqrs.domain.EventMapper;
 
 import java.io.IOException;
 

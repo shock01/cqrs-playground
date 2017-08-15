@@ -1,7 +1,7 @@
 package nl.stefhock.auth.cqrs.infrastructure;
 
 
-import nl.stefhock.auth.cqrs.domain.DomainEvent;
+import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 
 import java.util.List;
 

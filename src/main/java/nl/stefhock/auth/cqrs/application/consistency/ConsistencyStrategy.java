@@ -2,16 +2,15 @@ package nl.stefhock.auth.cqrs.application.consistency;
 
 // @TODO break this dependency, or is it ok to only use guava :-) !!
 
-import com.google.common.eventbus.Subscribe;
 import nl.stefhock.auth.cqrs.application.Consistency;
 import nl.stefhock.auth.cqrs.application.EventBus;
 import nl.stefhock.auth.cqrs.application.Projection;
-import nl.stefhock.auth.cqrs.domain.DomainEvent;
+import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
+import nl.stefhock.auth.cqrs.domain.events.EventDelegator;
 import nl.stefhock.auth.cqrs.domain.Id;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 import nl.stefhock.auth.cqrs.infrastructure.ProjectionSource;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -54,25 +53,14 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
     synchronized ConsistencyStrategy<T> resume() {
         if (state != State.SYNCED) {
             // repost events that were missed during sync
-            queue.forEach(item -> when(instance, item));
+            handle(queue);
             state = State.SYNCED;
         }
         return this;
     }
 
-    private void when(T instance, Object event) {
-        final Method when;
-        try {
-            when = instance.getClass().getDeclaredMethod("when", event.getClass());
-            when.setAccessible(true);
-            when.invoke(instance, event);
-        } catch (NoSuchMethodException e) {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(Level.FINE, String.format("No such method: when, %s", event.getClass()));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private void handle(List<DomainEvent> events) {
+        events.forEach(item -> EventDelegator.when(instance, item));
     }
 
     synchronized ConsistencyStrategy<T> suspend() {
@@ -84,10 +72,9 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
         return this;
     }
 
-    @Subscribe
-    public void handle(DomainEvent e) {
+    public void when(DomainEvent e) {
         if (state == State.SYNCED) {
-            when(instance, e);
+            EventDelegator.when(instance, e);
         } else {
             this.queue.add(e);
         }
@@ -113,10 +100,7 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
                 if (LOGGER.isLoggable(Level.INFO)) {
                     LOGGER.info(String.format("[%s] getting events from store: offset:%d, limit:%d", this, offset, chunkSize));
                 }
-                eventStore.getEvents(offset, chunkSize)
-                        .stream()
-                        .forEach(item -> when(instance, item));
-
+                handle(eventStore.getEvents(offset, chunkSize));
             }
             query.projectionSource().synced(storeSequenceId);
         } catch (Exception e) {
@@ -136,7 +120,7 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
         return id;
     }
 
-    public T query() {
+    public T projection() {
         return query;
     }
 

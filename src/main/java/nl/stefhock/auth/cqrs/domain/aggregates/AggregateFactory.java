@@ -1,5 +1,7 @@
-package nl.stefhock.auth.cqrs.domain;
+package nl.stefhock.auth.cqrs.domain.aggregates;
 
+
+import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 
 import java.util.List;
 

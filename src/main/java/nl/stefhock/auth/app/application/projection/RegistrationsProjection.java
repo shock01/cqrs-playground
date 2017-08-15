@@ -1,7 +1,6 @@
 package nl.stefhock.auth.app.application.projection;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.eventbus.Subscribe;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
@@ -13,16 +12,13 @@ import nl.stefhock.auth.cqrs.infrastructure.ProjectionSource;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Created by hocks on 5-7-2017.
  * <p>
- * should store the registrationsQuery outside of the event stream
+ * should store the projection outside of the event stream
  * should listen to domain events
  * should rebuild
  * should have logic to pause events and handle them after reading the state
@@ -34,7 +30,7 @@ import java.util.stream.Collectors;
  * @// FIXME: 13-7-2017 add IQueryWriter and IQueryReader with a MemoryBased implementation (HashMap)
  * @// FIXME: 13-7-2017 could use aspects like sync async to determine if the eventStore should be read to sync
  * or that it can be eventually consistent or we can add an interface like @Sync so that we decorate it and first load the events
- * from the store and after that return the query.
+ * from the store and after that return the projection.
  * <p>
  * iniitially do not newResourceConfig an abstraction but just implement here and abstract later to be reused
  * better to not directly use the eventBus here but to use generic like in a aggregate.when(Event)
@@ -61,9 +57,9 @@ import java.util.stream.Collectors;
  * RegistrationQuery ,
  * <p>
  * <p>
- * new ConsistentRegistrationsQuery(linearConsistencyStrategy, registrationsQuery) -> will always sync before execution
- * new ConsistentRegistrationsQuery(pollingConsistencyStrategy, registrationsQuery) -> will sync at a certain interval
- * new ConsistentRegistrationsQuery(eventBasedStrategy, registrationsQuery) -> will sync when a domain event is dispatched
+ * new ConsistentRegistrationsQuery(linearConsistencyStrategy, projection) -> will always sync before execution
+ * new ConsistentRegistrationsQuery(pollingConsistencyStrategy, projection) -> will sync at a certain interval
+ * new ConsistentRegistrationsQuery(eventBasedStrategy, projection) -> will sync when a domain event is dispatched
  * <p>
  * can a viewModel listen to Aggregates out side of the system ?? or are these domain events....system wide events
  * or should aggregates never be connected .....because that will be really complex...they should be changed
@@ -96,9 +92,9 @@ public class RegistrationsProjection extends BaseProjection<RegistrationsProject
     }
 
     @Override
-    public Set<Registration> list() {
+    public List<Registration> list() {
         try {
-            return projectionSource().stream().sorted(SORT_BY_EMAIL).collect(Collectors.toSet());
+            return projectionSource().stream().sorted(SORT_BY_EMAIL).collect(Collectors.toList());
         } catch (Exception e) {
             System.out.println(e);
         }

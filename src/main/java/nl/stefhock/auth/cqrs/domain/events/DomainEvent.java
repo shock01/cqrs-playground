@@ -1,4 +1,4 @@
-package nl.stefhock.auth.cqrs.domain;
+package nl.stefhock.auth.cqrs.domain.events;
 
 import java.util.Date;
 

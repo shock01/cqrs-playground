@@ -1,13 +1,14 @@
 package nl.stefhock.auth.app.infrastructure.eventstore.jdbc;
 
 
-import nl.stefhock.auth.app.DbMigration;
+import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.DbMigration;
 import nl.stefhock.auth.app.application.Application;
 import nl.stefhock.auth.app.domain.AuthEvent;
 import nl.stefhock.auth.app.domain.model.Registration;
-import nl.stefhock.auth.cqrs.domain.Aggregate;
+import nl.stefhock.auth.cqrs.domain.aggregates.Aggregate;
 import nl.stefhock.auth.cqrs.domain.Id;
 import nl.stefhock.auth.cqrs.infrastructure.EntityConcurrencyException;
+import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.JdbcEventStore;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Before;

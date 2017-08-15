@@ -1,4 +1,4 @@
-package nl.stefhock.auth.app.infrastructure.projections;
+package nl.stefhock.auth.cqrs.infrastructure.projections;
 
 import nl.stefhock.auth.cqrs.infrastructure.ProjectionSource;
 
@@ -9,19 +9,19 @@ import java.util.stream.Stream;
 /**
  * Created by hocks on 23-7-2017.
  */
-public class MemoryProjectionSource<T> extends ProjectionSource<T> {
-    @Override
-    public String toString() {
-        return "MemoryProjectionSource{" +
-                "source=" + source +
-                "} " + super.toString();
-    }
-
+public class InMemoryProjectionSource<T> extends ProjectionSource<T> {
     private final Set<T> source;
 
-    public MemoryProjectionSource(String name) {
+    public InMemoryProjectionSource(String name) {
         super(name);
         source = new HashSet<>();
+    }
+
+    @Override
+    public String toString() {
+        return "InMemoryProjectionSource{" +
+                "source=" + source +
+                "} " + super.toString();
     }
 
     @Override

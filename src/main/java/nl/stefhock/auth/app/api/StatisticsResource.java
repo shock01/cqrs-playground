@@ -56,8 +56,8 @@ public class StatisticsResource {
             instance.storeSequenceId = strategy.eventStore().sequenceId();
             instance.name = strategy.instance().getClass().getSimpleName();
             instance.state = strategy.state().name();
-            instance.sequenceId = strategy.query().projectionSource().sequenceInfo().sequenceId();
-            instance.sequenceDate = strategy.query().projectionSource().sequenceInfo().date();
+            instance.sequenceId = strategy.projection().projectionSource().sequenceInfo().sequenceId();
+            instance.sequenceDate = strategy.projection().projectionSource().sequenceInfo().date();
             return instance;
         }
 

@@ -1,8 +1,8 @@
 package nl.stefhock.auth.app.domain;
 
 import com.google.inject.AbstractModule;
-import nl.stefhock.auth.app.domain.events.JacksonEventMapper;
-import nl.stefhock.auth.cqrs.domain.EventMapper;
+import nl.stefhock.auth.cqrs.domain.events.JacksonEventMapper;
+import nl.stefhock.auth.cqrs.domain.events.EventMapper;
 
 /**
  * Created by hocks on 24-7-2017.

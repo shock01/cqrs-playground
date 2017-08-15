@@ -1,11 +1,11 @@
-package nl.stefhock.auth.app.infrastructure.eventstore.jdbc;
+package nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc;
 
 
 import nl.stefhock.auth.cqrs.application.EventBus;
-import nl.stefhock.auth.cqrs.domain.Aggregate;
-import nl.stefhock.auth.cqrs.domain.AggregateFactory;
-import nl.stefhock.auth.cqrs.domain.DomainEvent;
-import nl.stefhock.auth.cqrs.domain.EventMapper;
+import nl.stefhock.auth.cqrs.domain.aggregates.Aggregate;
+import nl.stefhock.auth.cqrs.domain.aggregates.AggregateFactory;
+import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
+import nl.stefhock.auth.cqrs.domain.events.EventMapper;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateRepository;
 import nl.stefhock.auth.cqrs.infrastructure.EntityConcurrencyException;
 import nl.stefhock.auth.cqrs.infrastructure.EntityStoreException;

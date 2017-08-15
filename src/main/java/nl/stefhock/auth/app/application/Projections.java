@@ -4,8 +4,8 @@ import nl.stefhock.auth.app.application.projection.RegistrationsProjection;
 import nl.stefhock.auth.cqrs.application.Projection;
 import nl.stefhock.auth.cqrs.application.consistency.Sync;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Created by hocks on 17-7-2017.
@@ -17,7 +17,7 @@ public class Projections {
 
     public interface Registrations extends Projection<RegistrationsProjection.Registration> {
         @Sync
-        Set<RegistrationsProjection.Registration> list();
+        List<RegistrationsProjection.Registration> list();
 
         @Sync
         Optional<RegistrationsProjection.Registration> byId(String uuid);

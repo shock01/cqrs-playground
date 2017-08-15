@@ -1,4 +1,4 @@
-package nl.stefhock.auth.app.infrastructure.projections;
+package nl.stefhock.auth.cqrs.infrastructure.projections;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IAtomicReference;

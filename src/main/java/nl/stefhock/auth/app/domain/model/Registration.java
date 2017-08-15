@@ -2,7 +2,7 @@ package nl.stefhock.auth.app.domain.model;
 
 import nl.stefhock.auth.app.domain.events.PasswordChangedEvent;
 import nl.stefhock.auth.app.domain.events.RegistrationCreatedEvent;
-import nl.stefhock.auth.cqrs.domain.Aggregate;
+import nl.stefhock.auth.cqrs.domain.aggregates.Aggregate;
 import nl.stefhock.auth.cqrs.domain.Id;
 
 import java.util.ArrayList;

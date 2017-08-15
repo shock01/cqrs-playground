@@ -9,11 +9,11 @@ import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.zaxxer.hikari.HikariDataSource;
-import nl.stefhock.auth.app.DbMigration;
+import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.DbMigration;
 import nl.stefhock.auth.app.application.Configuration;
-import nl.stefhock.auth.app.application.projection.RegistrationsProjection;
-import nl.stefhock.auth.app.infrastructure.eventstore.jdbc.JdbcEventStore;
+import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.JdbcEventStore;
 import nl.stefhock.auth.cqrs.application.EventBus;
+import nl.stefhock.auth.cqrs.infrastructure.eventbus.DelegatingEventBus;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateRepository;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 
@@ -27,7 +27,7 @@ public class InfrastructureModule extends AbstractModule {
     protected void configure() {
         bind(JdbcEventStore.class).in(Singleton.class);
         bind(AggregateRepository.class).to(JdbcEventStore.class);
-        bind(EventBus.class).to(GuavaEventBus.class);
+        bind(EventBus.class).to(DelegatingEventBus.class);
         bind(EventStore.class).to(JdbcEventStore.class);
     }
 

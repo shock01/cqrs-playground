@@ -8,11 +8,13 @@ import com.google.inject.Injector;
 import com.hazelcast.core.HazelcastInstance;
 import nl.stefhock.auth.app.application.ApplicationModule;
 import nl.stefhock.auth.app.application.command.RegistrationCommand;
+import nl.stefhock.auth.app.application.projection.RegistrationsProjectionModule;
 import nl.stefhock.auth.app.domain.DomainModule;
 import nl.stefhock.auth.app.infrastructure.InfrastructureModule;
 import nl.stefhock.auth.cqrs.application.CommandBus;
 import nl.stefhock.auth.cqrs.application.consistency.ConsistencyRegistry;
 import nl.stefhock.auth.cqrs.domain.Id;
+import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.DbMigration;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
@@ -35,7 +37,8 @@ public class Main {
         final Injector injector = Guice.createInjector(
                 new ApplicationModule(),
                 new DomainModule(),
-                new InfrastructureModule());
+                new InfrastructureModule(),
+                new RegistrationsProjectionModule());
         final ResourceConfig resourceConfig = newResourceConfig(injector);
         final URI baseUri = UriBuilder.fromUri("http://localhost").port(9000).build();
         final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, resourceConfig, false);

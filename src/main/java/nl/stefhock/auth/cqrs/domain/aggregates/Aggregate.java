@@ -1,7 +1,10 @@
-package nl.stefhock.auth.cqrs.domain;
+package nl.stefhock.auth.cqrs.domain.aggregates;
 
 
-import java.lang.reflect.Method;
+import nl.stefhock.auth.cqrs.domain.Id;
+import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
+import nl.stefhock.auth.cqrs.domain.events.EventDelegator;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -29,23 +32,10 @@ public abstract class Aggregate {
     void apply(Object event) {
         version++;
         try {
-            when(this, event);
+            EventDelegator.when(this, event);
         } catch (Exception e) {
             version--;
             throw e;
-        }
-    }
-
-    private void when(Object instance, Object event) {
-        final Method when;
-        try {
-            when = instance.getClass().getDeclaredMethod("when", event.getClass());
-            when.setAccessible(true);
-            when.invoke(instance, event);
-        } catch (NoSuchMethodException e) {
-            LOGGER.warning(String.format("No such method: when, %s", event.getClass()));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 

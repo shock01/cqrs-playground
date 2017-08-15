@@ -1,5 +1,7 @@
-package nl.stefhock.auth.cqrs.domain;
+package nl.stefhock.auth.cqrs.domain.events;
 
+
+import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 
 /**
  * Created by hocks on 20-7-2017.
