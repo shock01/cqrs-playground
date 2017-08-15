@@ -20,6 +20,7 @@ public class HazelcastProjectionSource<T> extends ProjectionSource<T> {
     private ISet<T> source;
 
     @Inject
+    // @TODO fix the @Named in Guice to have named projections
     public HazelcastProjectionSource(final String name, final HazelcastInstance hazelcast) {
         super(name);
         this.hazelcast = hazelcast;

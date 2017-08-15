@@ -116,8 +116,7 @@ public class RegistrationsProjection extends BaseProjection<RegistrationsProject
     }
 
     // @// FIXME: 13-7-2017 change to when(RegistrationCreatedEvent e)
-    @Subscribe
-    public void registrationCreated(RegistrationCreatedEvent e) {
+    public void when(RegistrationCreatedEvent e) {
         projectionSource().addOrUpdate(new Registration(e.getEmail(), e.getDate(), e.getAggregateId()));
     }
 

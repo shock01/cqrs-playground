@@ -42,6 +42,9 @@ public class ApplicationModule extends AbstractModule {
     @Provides
     @Singleton
     ProjectionSource<RegistrationsProjection.Registration> projectionSource(HazelcastInstance hazelcast) {
+
+        // @TODO make this dynamic using @Named so that we do not need to write so much for the projections
+
         // return new RegistrationsProjection(new MemoryProjectionSource<>("registrations"));
         final HazelcastProjectionSource<RegistrationsProjection.Registration> projectionSource = new HazelcastProjectionSource<>("registrations", hazelcast);
         projectionSource.initialize();

@@ -9,9 +9,12 @@ import nl.stefhock.auth.cqrs.application.Projection;
 import nl.stefhock.auth.cqrs.domain.DomainEvent;
 import nl.stefhock.auth.cqrs.domain.Id;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
+import nl.stefhock.auth.cqrs.infrastructure.ProjectionSource;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,11 +24,11 @@ import java.util.logging.Logger;
 public abstract class ConsistencyStrategy<T extends Projection<?>> {
 
     private static final Logger LOGGER = Logger.getLogger(Consistency.class.getName());
-
     final T instance;
     private final EventBus eventBus;
     private final EventStore eventStore;
     private final String id;
+    private ReentrantLock lock;
     private List<DomainEvent> queue;
     volatile private State state;
     private String name;
@@ -37,28 +40,39 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
         eventStore = builder.eventStore();
         name = builder.name();
         queue = new ArrayList<>();
+        lock = new ReentrantLock(true);
         this.query = query;
         state = State.UNINITIALIZED;
         id = Id.generate();
     }
 
     void init() {
+        eventBus.register(this);
         state = State.INITIALIZED;
     }
 
     synchronized ConsistencyStrategy<T> resume() {
-
         if (state != State.SYNCED) {
-            if (state == State.SUSPENDED) {
-                eventBus.unregister(this);
-            }
             // repost events that were missed during sync
-            eventBus.register(instance);
-            queue.forEach(eventBus::post);
+            queue.forEach(item -> when(instance, item));
             state = State.SYNCED;
         }
-
         return this;
+    }
+
+    private void when(T instance, Object event) {
+        final Method when;
+        try {
+            when = instance.getClass().getDeclaredMethod("when", event.getClass());
+            when.setAccessible(true);
+            when.invoke(instance, event);
+        } catch (NoSuchMethodException e) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.log(Level.FINE, String.format("No such method: when, %s", event.getClass()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     synchronized ConsistencyStrategy<T> suspend() {
@@ -67,39 +81,54 @@ public abstract class ConsistencyStrategy<T extends Projection<?>> {
         }
         eventBus.register(this);
         state = State.SUSPENDED;
-
         return this;
     }
 
     @Subscribe
     public void handle(DomainEvent e) {
-        this.queue.add(e);
+        if (state == State.SYNCED) {
+            when(instance, e);
+        } else {
+            this.queue.add(e);
+        }
     }
 
-    public abstract void synchronize();
+    void synchronize() {
+        synchronize(instance.projectionSource().sequenceInfo());
+    }
 
-    synchronized void syncBatched(long querySequenceId, long storeSequenceId) {
-        int limit = 1000;
-        int total = (int) (storeSequenceId - querySequenceId);
-        for (int n = 0; n < total; n += limit) {
-            int chunkSize = Math.min(total, n + limit);
-            long offset = n + querySequenceId;
-            if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.info(String.format("[%s] getting events from store: offset:%d, limit:%d", this, offset, chunkSize));
-            }
-            try {
+    public abstract void synchronize(ProjectionSource.SequenceInfo info);
+
+    void syncBatched(long querySequenceId, long storeSequenceId) {
+        if (!lock.tryLock()) {
+            return;
+        }
+        try {
+            this.suspend();
+            int limit = 1000;
+            int total = (int) (storeSequenceId - querySequenceId);
+            for (int n = 0; n < total; n += limit) {
+                int chunkSize = Math.min(total, n + limit);
+                long offset = n + querySequenceId;
+                if (LOGGER.isLoggable(Level.INFO)) {
+                    LOGGER.info(String.format("[%s] getting events from store: offset:%d, limit:%d", this, offset, chunkSize));
+                }
                 eventStore.getEvents(offset, chunkSize)
                         .stream()
-                        .forEach(eventBus::post);
-            } catch (Exception e) {
-                System.out.print(e);
+                        .forEach(item -> when(instance, item));
+
             }
+            query.projectionSource().synced(storeSequenceId);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception syncing events", e);
+        } finally {
+            lock.unlock();
+            this.resume();
         }
-        query.projectionSource().synced(storeSequenceId);
     }
 
 
-    synchronized long eventStoreSequenceId() {
+    long eventStoreSequenceId() {
         return eventStore.sequenceId();
     }
 

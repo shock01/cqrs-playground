@@ -27,18 +27,11 @@ public class LinearConsistencyStrategy<T extends Projection<?>> extends Consiste
     }
 
     @Override
-    public synchronized void synchronize() {
-
-        final ProjectionSource.SequenceInfo info = query().projectionSource().sequenceInfo();
+    public void synchronize(ProjectionSource.SequenceInfo info) {
         final long querySequenceId = info.sequenceId();
         final long storeSequenceId = eventStoreSequenceId();
         if (storeSequenceId > querySequenceId) {
-            this.suspend();
-            if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.info(String.format("[%s] sync:, event:%d, store:%d", this, querySequenceId, storeSequenceId));
-            }
             syncBatched(querySequenceId, storeSequenceId);
-            this.resume();
         } else {
             if (LOGGER.isLoggable(Level.INFO)) {
                 LOGGER.info(String.format("[%s] synced", this));
