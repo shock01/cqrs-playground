@@ -5,16 +5,15 @@ package nl.stefhock.auth.app;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.hazelcast.core.HazelcastInstance;
 import nl.stefhock.auth.app.application.ApplicationModule;
-import nl.stefhock.auth.app.application.command.RegistrationCommand;
-import nl.stefhock.auth.app.application.projection.RegistrationsProjectionModule;
+import nl.stefhock.auth.app.application.QueryRegistry;
+import nl.stefhock.auth.app.application.RegistrationsModule;
 import nl.stefhock.auth.app.domain.DomainModule;
+import nl.stefhock.auth.app.domain.commands.CreateRegistration;
 import nl.stefhock.auth.app.infrastructure.InfrastructureModule;
 import nl.stefhock.auth.cqrs.application.CommandBus;
-import nl.stefhock.auth.cqrs.application.consistency.ConsistencyRegistry;
 import nl.stefhock.auth.cqrs.domain.Id;
-import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.DbMigration;
+import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.DbMigration;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
@@ -38,7 +37,7 @@ public class Main {
                 new ApplicationModule(),
                 new DomainModule(),
                 new InfrastructureModule(),
-                new RegistrationsProjectionModule());
+                new RegistrationsModule());
         final ResourceConfig resourceConfig = newResourceConfig(injector);
         final URI baseUri = UriBuilder.fromUri("http://localhost").port(9000).build();
         final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(baseUri, resourceConfig, false);
@@ -50,18 +49,26 @@ public class Main {
         // dumb insert
         // @TODO do not always run this!! its just for development purposes now
         injector.getInstance(DbMigration.class).migrate();
+
+        // when moved here it will get all the events after this
+        final QueryRegistry registry = injector.getInstance(QueryRegistry.class);
+
+
         int i = 10;
-        ConsistencyRegistry registry = injector.getInstance(ConsistencyRegistry.class);
-        registry.pauseAll();
         final CommandBus commandBus = injector.getInstance(CommandBus.class);
         while (i-- > 0) {
-            final RegistrationCommand.RegistrationInfo info = new RegistrationCommand.RegistrationInfo(String.format("%d@greetz.com", i), String.format("%d@greetz.com", i), null);
-            commandBus.execute(new RegistrationCommand(Id.generate(), info));
+            final CreateRegistration.RegistrationInfo info = new CreateRegistration.RegistrationInfo(String.format("%d@greetz.com", i), String.format("%d@greetz.com", i), null);
+            commandBus.execute(new CreateRegistration(Id.generate(), info));
         }
-        // @todo we should sync all the BaseProjection on start up maybe..
+
+        registry.syncAll();
+        registry.listenForEvents();
+
+        // get the readmodel which will initialize hazelcast which is not declarative
+
         // or have a policy if it should (Strategy)
         // start hazelcast
-        injector.getInstance(HazelcastInstance.class);
+        //injector.getInstance(HazelcastInstance.class);
 
         Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
         server.start();

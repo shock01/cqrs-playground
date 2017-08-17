@@ -3,7 +3,7 @@ package nl.stefhock.auth.cqrs.domain.aggregates;
 
 import nl.stefhock.auth.cqrs.domain.Id;
 import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
-import nl.stefhock.auth.cqrs.domain.events.EventDelegator;
+import nl.stefhock.auth.cqrs.application.EventDelegator;
 
 import java.util.ArrayList;
 import java.util.List;

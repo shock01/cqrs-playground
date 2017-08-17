@@ -7,6 +7,8 @@ import java.util.Date;
  */
 public abstract class DomainEvent {
 
+    // domain event should have a version which will be set to json ignore
+
     protected String aggregateId;
     protected Date date;
 
@@ -25,11 +27,12 @@ public abstract class DomainEvent {
 
     @Override
     public String toString() {
-        return "AuthEvent{" +
-                "withAggregateId='" + aggregateId + '\'' +
-                ", withDate=" + date +
+        return "DomainEvent{" +
+                "aggregateId='" + aggregateId + '\'' +
+                ", date=" + date +
                 '}';
     }
+
 
     public abstract static class Builder<T, E extends DomainEvent> {
         protected final E event;

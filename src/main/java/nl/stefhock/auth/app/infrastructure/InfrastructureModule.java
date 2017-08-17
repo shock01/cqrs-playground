@@ -9,11 +9,11 @@ import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.zaxxer.hikari.HikariDataSource;
-import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.DbMigration;
+import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.DbMigration;
 import nl.stefhock.auth.app.application.Configuration;
-import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.JdbcEventStore;
+import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.PostgreSQLEventStore;
 import nl.stefhock.auth.cqrs.application.EventBus;
-import nl.stefhock.auth.cqrs.infrastructure.eventbus.DelegatingEventBus;
+import nl.stefhock.auth.cqrs.infrastructure.DelegatingEventBus;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateRepository;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 
@@ -25,10 +25,10 @@ import java.util.Properties;
 public class InfrastructureModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(JdbcEventStore.class).in(Singleton.class);
-        bind(AggregateRepository.class).to(JdbcEventStore.class);
-        bind(EventBus.class).to(DelegatingEventBus.class);
-        bind(EventStore.class).to(JdbcEventStore.class);
+        bind(PostgreSQLEventStore.class).in(Singleton.class);
+        bind(AggregateRepository.class).to(PostgreSQLEventStore.class);
+        bind(EventBus.class).to(DelegatingEventBus.class).in(Singleton.class);
+        bind(EventStore.class).to(PostgreSQLEventStore.class);
     }
 
     @Provides
@@ -65,7 +65,7 @@ public class InfrastructureModule extends AbstractModule {
         config.getNetworkConfig().setPort(5900);
         config.getNetworkConfig().setPortAutoIncrement(false);
 //        config.getSerializationConfig().addDataSerializableFactory
-//                (1, (int id) -> (id == RegistrationsProjection.Registration.ID) ? new RegistrationsProjection.Registration() : null);
+//                (1, (int id) -> (id == RegistrationsQueryHandler.RegistrationView.ID) ? new RegistrationsQueryHandler.RegistrationView() : null);
         final NetworkConfig network = config.getNetworkConfig();
         JoinConfig join = network.getJoin();
         join.getMulticastConfig().setEnabled(false);

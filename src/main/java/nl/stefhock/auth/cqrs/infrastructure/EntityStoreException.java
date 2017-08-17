@@ -7,8 +7,4 @@ public class EntityStoreException extends RuntimeException {
     public EntityStoreException(String message, Throwable throwable) {
         super(message, throwable);
     }
-
-    public EntityStoreException() {
-        super();
-    }
 }

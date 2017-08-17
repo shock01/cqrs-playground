@@ -1,14 +1,14 @@
 package nl.stefhock.auth.app.infrastructure.eventstore.jdbc;
 
 
-import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.DbMigration;
+import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.DbMigration;
 import nl.stefhock.auth.app.application.Application;
 import nl.stefhock.auth.app.domain.AuthEvent;
-import nl.stefhock.auth.app.domain.model.Registration;
+import nl.stefhock.auth.app.domain.aggregates.Registration;
 import nl.stefhock.auth.cqrs.domain.aggregates.Aggregate;
 import nl.stefhock.auth.cqrs.domain.Id;
 import nl.stefhock.auth.cqrs.infrastructure.EntityConcurrencyException;
-import nl.stefhock.auth.cqrs.infrastructure.eventstore.jdbc.JdbcEventStore;
+import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.PostgreSQLEventStore;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.Before;
@@ -28,7 +28,7 @@ public class JdbcEventStoreIT {
     static final String JDBC = "jdbc:h2:mem:match;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=PostgreSQL";
     final String id = "withAggregateId";
 
-    private JdbcEventStore subject;
+    private PostgreSQLEventStore subject;
     private DbMigration dbMigration;
     private JdbcDataSource dataSource;
 
@@ -41,7 +41,7 @@ public class JdbcEventStoreIT {
     public void setUp() {
         dataSource = new JdbcDataSource();
         dataSource.setURL(JDBC);
-        subject = new JdbcEventStore(dataSource, Application.aggregateFactory, Application.eventBus);
+        subject = new PostgreSQLEventStore(dataSource, Application.aggregateFactory, Application.eventBus);
         dbMigration = new DbMigration(JDBC);
         dbMigration.migrate();
     }

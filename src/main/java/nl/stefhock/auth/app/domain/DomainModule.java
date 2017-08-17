@@ -1,8 +1,11 @@
 package nl.stefhock.auth.app.domain;
 
 import com.google.inject.AbstractModule;
-import nl.stefhock.auth.cqrs.domain.events.JacksonEventMapper;
-import nl.stefhock.auth.cqrs.domain.events.EventMapper;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import nl.stefhock.auth.app.domain.events.AuthEvent;
+import nl.stefhock.auth.cqrs.application.EventMapper;
+import nl.stefhock.auth.cqrs.infrastructure.jackson.JacksonEventMapper;
 
 /**
  * Created by hocks on 24-7-2017.
@@ -10,6 +13,12 @@ import nl.stefhock.auth.cqrs.domain.events.EventMapper;
 public class DomainModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(EventMapper.class).to(JacksonEventMapper.class);
+
+    }
+
+    @Provides
+    @Singleton
+    EventMapper eventMapper() {
+        return new JacksonEventMapper(AuthEvent.class);
     }
 }
