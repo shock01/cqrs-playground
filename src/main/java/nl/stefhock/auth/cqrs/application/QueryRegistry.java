@@ -21,12 +21,11 @@ public class QueryRegistry {
     // @TODO the sync stuff should be in a different class, single purpose
     private static final Logger LOGGER = Logger.getLogger(QueryRegistry.class.getName());
     // @TODO make me configurable
-
     private static final int BATCH_SIZE = 10;
 
-    private final Map<QueryHandler, Query> registars = new ConcurrentHashMap<>();
+    private final Map<QueryHandler, Query> registrars = new ConcurrentHashMap<>();
 
-    private final BlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<DomainEvent> eventQueue = new LinkedBlockingQueue<>();
 
     private final EventStore eventStore;
     private final EventBus eventBus;
@@ -41,26 +40,27 @@ public class QueryRegistry {
         this.lock = lock;
     }
 
-    private static long getLowestSequence(Map<QueryHandler, Query> handlers) {
+    private static long oldestSequence(Map<QueryHandler, Query> handlers) {
         return handlers.keySet()
                 .stream()
-                .reduce((a, b) -> {
-                    if (a.readModel().sequenceInfo().sequenceId() < b.readModel().sequenceInfo().sequenceId()) {
-                        return a;
-                    } else {
-                        return b;
-                    }
-                })
+                .reduce(QueryRegistry::oldestQueryHandler)
                 .map(item -> item.readModel().sequenceInfo().sequenceId())
                 .orElse(0L);
+    }
 
+    private static QueryHandler oldestQueryHandler(QueryHandler a, QueryHandler b) {
+        if (a.readModel().sequenceId() < b.readModel().sequenceId()) {
+            return a;
+        } else {
+            return b;
+        }
     }
 
     public void register(QueryHandler handler, Query query) {
-        if (registars.containsKey(handler) && LOGGER.isLoggable(Level.INFO)) {
+        if (registrars.containsKey(handler) && LOGGER.isLoggable(Level.INFO)) {
             LOGGER.log(Level.INFO, "handler already registered", handler);
         }
-        registars.putIfAbsent(handler, query);
+        registrars.putIfAbsent(handler, query);
     }
 
     public void syncAll() {
@@ -87,14 +87,14 @@ public class QueryRegistry {
     }
 
     private void syncBatched(long storeSequenceId, int limit) {
-        // first make a map of items that are out of syncBatched and remove them from the set when
-        // they are not needed anymore
-        // this is becoming a little complex here now...do we really need this kinda logic here easier to do this just one by one
         try {
             lock.lock();
+            /**
+             * after acquiring the lock validate again if there are any out of sync handlers
+             * they might have been updated meanwhile
+             */
             final Map<QueryHandler, Query> handlers = outOfSyncHandlers(storeSequenceId);
-            final long lowestSequence = getLowestSequence(handlers);
-            syncBatched(handlers, storeSequenceId, lowestSequence, limit);
+            syncBatched(handlers, storeSequenceId, oldestSequence(handlers), limit);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "cannot syncBatched events", e);
         } finally {
@@ -102,29 +102,18 @@ public class QueryRegistry {
         }
     }
 
-    private void syncBatched(Map<QueryHandler, Query> handlers, long storeSequenceId, long querySequenceId, int limit) {
-        long total = storeSequenceId - querySequenceId;
-        for (long offset = querySequenceId; offset < total; offset += limit) {
-            // chunk size = limit or the min of the total - start
+    private void syncBatched(Map<QueryHandler, Query> handlers, long storeSequenceId, long sequenceId, int limit) {
+        long total = storeSequenceId - sequenceId;
+        for (long offset = sequenceId; offset < total; offset += limit) {
             final long current = offset;
             final int chunkSize = (int) Math.min(limit, total - offset);
-
             if (LOGGER.isLoggable(Level.INFO)) {
                 LOGGER.log(Level.INFO, String.format("fetching events offset:%d (limit:%d)", offset, chunkSize));
-
             }
             final List<DomainEvent> events = eventStore.getEvents(offset, chunkSize);
-            handlers.entrySet()
+            handlers.keySet()
                     .parallelStream()
-                    .forEach(entry -> {
-                        QueryHandler handler = entry.getKey();
-                        int start = (int) ((handler.readModel().sequenceInfo().sequenceId() - current));
-                        if (start < chunkSize) {
-                            events.subList(start, chunkSize).stream().forEach(event -> EventDelegator.when(entry.getKey(), event));
-                            // @todo current should come from event not from calculation
-                            handler.readModel().synced(current + chunkSize);
-                        }
-                    });
+                    .forEach(entry -> syncHandler(entry, current, events));
         }
 
         if (LOGGER.isLoggable(Level.INFO)) {
@@ -132,10 +121,24 @@ public class QueryRegistry {
         }
     }
 
-    private Map<QueryHandler, Query> outOfSyncHandlers(long storeSequenceId) {
-        return registars.entrySet()
+    private void syncHandler(QueryHandler handler, long offset, List<DomainEvent> events) {
+        final int size = events.size();
+        final int start = (int) ((handler.readModel().sequenceId() - offset));
+        if (start >= size) {
+            return;
+        }
+        events.subList(start, size)
                 .stream()
-                .filter(item -> item.getKey().readModel().sequenceInfo().sequenceId() < storeSequenceId)
+                .forEach(event -> EventDelegator.when(handler, event));
+        // @todo current should come from event not from calculation
+        handler.readModel().synced(offset + size);
+
+    }
+
+    private Map<QueryHandler, Query> outOfSyncHandlers(long storeSequenceId) {
+        return registrars.entrySet()
+                .stream()
+                .filter(item -> item.getKey().readModel().sequenceId() < storeSequenceId)
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue));
@@ -146,8 +149,8 @@ public class QueryRegistry {
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    final Object event = eventQueue.take();
-                    registars.values()
+                    final DomainEvent event = eventQueue.take();
+                    registrars.values()
                             .parallelStream()
                             .forEach(handler -> EventDelegator.when(handler, event));
                 } catch (InterruptedException e) {

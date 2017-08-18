@@ -36,6 +36,10 @@ public abstract class ReadModel<T> {
         return name;
     }
 
+    public long sequenceId() {
+        return sequenceInfo().sequenceId();
+    }
+
     @Override
     public String toString() {
         return "ReadModel{" +
@@ -45,8 +49,9 @@ public abstract class ReadModel<T> {
     }
 
     public static class SequenceInfo {
-        private Long sequenceId;
+        private long sequenceId;
         private Date sequenceDate;
+
         SequenceInfo(Long sequenceId, Date sequenceDate) {
             this.sequenceId = sequenceId;
             this.sequenceDate = sequenceDate;
@@ -64,11 +69,11 @@ public abstract class ReadModel<T> {
                     '}';
         }
 
-        public Long sequenceId() {
+        public long sequenceId() {
             return sequenceId;
         }
 
-        void update(Long sequenceId) {
+        void update(long sequenceId) {
             this.sequenceId = sequenceId;
             this.sequenceDate = new Date();
         }

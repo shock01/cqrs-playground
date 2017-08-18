@@ -18,6 +18,7 @@ public class DomainModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @SuppressWarnings("unused")
     EventMapper eventMapper() {
         return new JacksonEventMapper(AuthEvent.class);
     }

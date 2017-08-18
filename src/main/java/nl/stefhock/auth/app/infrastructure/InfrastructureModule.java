@@ -32,12 +32,14 @@ public class InfrastructureModule extends AbstractModule {
     }
 
     @Provides
+    @SuppressWarnings("unused")
     DbMigration dbMigration(Configuration configuration) {
         return new DbMigration(configuration.dataSource.jdbcUrl);
     }
 
     @Provides
     @Singleton
+    @SuppressWarnings("unused")
     javax.sql.DataSource dataSource(Configuration configuration) {
         final Configuration.DataSource dataSourceConfiguration = configuration.dataSource;
         final HikariDataSource hikariDataSource = new HikariDataSource();
@@ -57,6 +59,7 @@ public class InfrastructureModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @SuppressWarnings("unused")
     public HazelcastInstance hazelcastInstance() {
         // https://blog.hazelcast.com/comparing-serialization-methods/
         final Config config = new Config();
