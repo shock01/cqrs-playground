@@ -14,6 +14,7 @@ public class EventDelegator {
     public static void when(Object instance, Object event) {
         final Method when;
         try {
+            // will not work with abstract methods
             when = instance.getClass().getDeclaredMethod("when", event.getClass());
             when.setAccessible(true);
             when.invoke(instance, event);

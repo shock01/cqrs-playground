@@ -1,4 +1,4 @@
-package nl.stefhock.auth.app.application;
+package nl.stefhock.auth.app.infrastructure.jersey;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;

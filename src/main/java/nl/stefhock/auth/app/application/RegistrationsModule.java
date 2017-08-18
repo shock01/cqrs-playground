@@ -9,6 +9,7 @@ import com.hazelcast.core.HazelcastInstance;
 import nl.stefhock.auth.app.application.queries.RegistrationView;
 import nl.stefhock.auth.app.application.queries.RegistrationsQuery;
 import nl.stefhock.auth.app.application.queryhandlers.RegistrationsQueryHandler;
+import nl.stefhock.auth.cqrs.application.QueryRegistry;
 import nl.stefhock.auth.cqrs.infrastructure.ReadModel;
 import nl.stefhock.auth.cqrs.infrastructure.hazelcast.HazelcastReadModel;
 

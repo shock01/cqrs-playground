@@ -9,11 +9,11 @@ import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.zaxxer.hikari.HikariDataSource;
+import nl.stefhock.auth.app.infrastructure.quava.GuavaEventBus;
 import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.DbMigration;
 import nl.stefhock.auth.app.application.Configuration;
 import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.PostgreSQLEventStore;
 import nl.stefhock.auth.cqrs.application.EventBus;
-import nl.stefhock.auth.cqrs.infrastructure.DelegatingEventBus;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateRepository;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 
@@ -27,7 +27,7 @@ public class InfrastructureModule extends AbstractModule {
     protected void configure() {
         bind(PostgreSQLEventStore.class).in(Singleton.class);
         bind(AggregateRepository.class).to(PostgreSQLEventStore.class);
-        bind(EventBus.class).to(DelegatingEventBus.class).in(Singleton.class);
+        bind(EventBus.class).to(GuavaEventBus.class).in(Singleton.class);
         bind(EventStore.class).to(PostgreSQLEventStore.class);
     }
 

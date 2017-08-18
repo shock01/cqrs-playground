@@ -65,3 +65,5 @@ public MyQuery implements MyQuery {
     
 }
 
+use the guava eventbus this one is much more mature
+
