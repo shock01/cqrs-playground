@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
  */
 public class QueryRegistry {
 
+    // @TODO the sync stuff should be in a different class, single purpose
     private static final Logger LOGGER = Logger.getLogger(QueryRegistry.class.getName());
     // @TODO make me configurable
 
