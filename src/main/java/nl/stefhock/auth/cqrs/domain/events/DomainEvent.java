@@ -9,8 +9,8 @@ public abstract class DomainEvent {
 
     // domain event should have a version which will be set to json ignore
 
-    protected String aggregateId;
-    protected Date date;
+    String aggregateId;
+    Date date;
 
     protected DomainEvent(final String aggregateId, final Date date) {
         this.aggregateId = aggregateId;

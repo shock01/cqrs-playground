@@ -8,7 +8,7 @@ import java.util.Map;
  */
 public class CommandBus {
 
-    private Map<Class<? extends Command>, CommandHandler<? extends Command>> handlers;
+    private final Map<Class<? extends Command>, CommandHandler<? extends Command>> handlers;
 
     public CommandBus() {
         handlers = new HashMap<>();

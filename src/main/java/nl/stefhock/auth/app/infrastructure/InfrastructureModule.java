@@ -9,7 +9,7 @@ import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.zaxxer.hikari.HikariDataSource;
-import nl.stefhock.auth.app.infrastructure.quava.GuavaEventBus;
+import nl.stefhock.auth.cqrs.infrastructure.quava.GuavaEventBus;
 import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.DbMigration;
 import nl.stefhock.auth.app.application.Configuration;
 import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.PostgreSQLEventStore;
@@ -33,10 +33,8 @@ public class InfrastructureModule extends AbstractModule {
 
     @Provides
     DbMigration dbMigration(Configuration configuration) {
-        final DbMigration dbMigration = new DbMigration(configuration.dataSource.jdbcUrl);
-        return dbMigration;
+        return new DbMigration(configuration.dataSource.jdbcUrl);
     }
-
 
     @Provides
     @Singleton

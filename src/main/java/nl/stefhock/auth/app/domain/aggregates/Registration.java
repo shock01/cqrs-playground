@@ -15,7 +15,7 @@ import java.util.List;
 public class Registration extends Aggregate {
 
     private String email;
-    private List<Password> passwords = new ArrayList<>();
+    private final List<Password> passwords = new ArrayList<>();
     private Password password;
     private String source;
 

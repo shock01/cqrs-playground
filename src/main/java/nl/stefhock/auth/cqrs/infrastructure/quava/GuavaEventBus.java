@@ -1,4 +1,4 @@
-package nl.stefhock.auth.app.infrastructure.quava;
+package nl.stefhock.auth.cqrs.infrastructure.quava;
 
 import nl.stefhock.auth.cqrs.application.EventBus;
 

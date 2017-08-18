@@ -28,14 +28,22 @@ public class Main {
         final Application application = injector.getInstance(Application.class);
         // @todo this should be moved to another docker container
         injector.getInstance(DbMigration.class).migrate();
+
+        final CommandBus commandBus = injector.getInstance(CommandBus.class);
+        int i = 12;
+        while (i-- > 0) {
+            final CreateRegistration.RegistrationInfo info = new CreateRegistration.RegistrationInfo(String.format("%d@greetz.com", i), String.format("%d@greetz.com", i), null);
+            commandBus.execute(new CreateRegistration(Id.generate(), info));
+        }
+        // past events
         application.start();
 
         // dummy things
-        int i = 10;
-        final CommandBus commandBus = injector.getInstance(CommandBus.class);
+
+        // new events
+        i = 9;
         while (i-- > 0) {
             final CreateRegistration.RegistrationInfo info = new CreateRegistration.RegistrationInfo(String.format("%d@greetz.com", i), String.format("%d@greetz.com", i), null);
-            System.out.println("created registration");
             commandBus.execute(new CreateRegistration(Id.generate(), info));
         }
 

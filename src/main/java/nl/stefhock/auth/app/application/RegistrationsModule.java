@@ -27,19 +27,21 @@ public class RegistrationsModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @SuppressWarnings("unused")
     ReadModel<RegistrationView> readModel(HazelcastInstance hazelcast) {
         return HazelcastReadModel.factory("registrations", hazelcast);
     }
 
     @Provides
     @Singleton
+    @SuppressWarnings("unused")
     RegistrationsQuery query(
-            ReadModel<RegistrationView> readModel,
-            EventBus eventBus) {
+            ReadModel<RegistrationView> readModel) {
         return new RegistrationsQueryHandler(readModel);
     }
 
     @Inject
+    @SuppressWarnings("unused")
     void subscribe(QueryRegistry handlers, RegistrationsQueryHandler handler, RegistrationsQuery query) {
         handlers.register(handler, query);
     }

@@ -28,7 +28,7 @@ import java.util.TimeZone;
  * Created by hocks on 12-7-2017.
  */
 public class JerseyResourceConfig extends ResourceConfig {
-    JerseyResourceConfig(Injector injector) {
+    private JerseyResourceConfig(Injector injector) {
         register(LoggingFeature.class);
         register(new GuiceFeature(injector));
         register(ExceptionMapperProvider.class);

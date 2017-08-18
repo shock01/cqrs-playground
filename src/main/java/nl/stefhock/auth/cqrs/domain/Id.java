@@ -9,7 +9,7 @@ public class Id {
 
     private final String value;
 
-    public Id(final String value) {
+    private Id(final String value) {
         this.value = value;
     }
 

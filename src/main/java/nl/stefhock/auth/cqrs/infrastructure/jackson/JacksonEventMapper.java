@@ -14,7 +14,7 @@ import java.io.IOException;
  */
 public class JacksonEventMapper implements EventMapper {
 
-    private static ObjectMapper objectMapper;
+    private static final ObjectMapper objectMapper;
 
     static {
         objectMapper = new ObjectMapper(new SmileFactory());

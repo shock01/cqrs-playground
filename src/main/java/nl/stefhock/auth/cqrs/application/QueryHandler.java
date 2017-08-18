@@ -13,7 +13,7 @@ public abstract class QueryHandler<T> {
         this.readModel = readModel;
     }
 
-    public ReadModel<T> readModel() {
+    protected ReadModel<T> readModel() {
         return readModel;
     }
 }

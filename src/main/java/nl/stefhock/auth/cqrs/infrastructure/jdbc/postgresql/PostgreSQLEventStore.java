@@ -2,10 +2,10 @@ package nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql;
 
 
 import nl.stefhock.auth.cqrs.application.EventBus;
+import nl.stefhock.auth.cqrs.application.EventMapper;
 import nl.stefhock.auth.cqrs.domain.aggregates.Aggregate;
 import nl.stefhock.auth.cqrs.domain.aggregates.AggregateFactory;
 import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
-import nl.stefhock.auth.cqrs.application.EventMapper;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateRepository;
 import nl.stefhock.auth.cqrs.infrastructure.EntityConcurrencyException;
 import nl.stefhock.auth.cqrs.infrastructure.EntityStoreException;
@@ -72,7 +72,6 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
                 return Collections.emptyList();
             }
             while (resultSet.next()) {
-                final String eventType = resultSet.getString("eventType");
                 final byte[] data = resultSet.getBytes("data");
                 events.add(eventMapper.toEvent(data));
             }

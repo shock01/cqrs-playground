@@ -14,8 +14,6 @@ import java.util.logging.Logger;
  */
 public abstract class Aggregate {
 
-    private static final Logger LOGGER = Logger.getLogger(Aggregate.class.getName());
-
     protected Id id;
     private int version;
     private List<DomainEvent> uncommittedEvents = new ArrayList<>();

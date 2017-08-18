@@ -39,20 +39,22 @@ public class ApplicationModule extends AbstractModule {
 
     @Provides
     @Singleton
+    @SuppressWarnings("unused")
     QueryRegistry queryRegistry(EventBus eventBus, EventStore eventStore) {
         final ExecutorService executor = Executors.newFixedThreadPool(4);
         final Lock lock = new ReentrantLock();
-        final QueryRegistry registry = new QueryRegistry(eventStore, eventBus, executor, lock);
-        return registry;
+        return new QueryRegistry(eventStore, eventBus, executor, lock);
     }
 
     @Provides
     @Singleton
+    @SuppressWarnings("unused")
     Configuration configuration(ObjectMapper objectMapper) throws IOException {
         return objectMapper.readValue(new File("conf/application.json"), Configuration.class);
     }
 
     @Inject
+    @SuppressWarnings("unused")
     void registrationCommandHandler(final CommandBus commandBus, final CreateRegistrationHandler createRegistrationHandler) {
         commandBus.register(CreateRegistration.class, createRegistrationHandler);
     }

@@ -1,9 +1,8 @@
 package nl.stefhock.auth.app.application.queryhandlers;
 
-import nl.stefhock.auth.app.domain.events.RegistrationCreated;
 import nl.stefhock.auth.app.application.queries.RegistrationView;
 import nl.stefhock.auth.app.application.queries.RegistrationsQuery;
-import nl.stefhock.auth.cqrs.application.Consistency;
+import nl.stefhock.auth.app.domain.events.RegistrationCreated;
 import nl.stefhock.auth.cqrs.application.QueryHandler;
 import nl.stefhock.auth.cqrs.infrastructure.ReadModel;
 
@@ -75,10 +74,9 @@ import java.util.stream.Collectors;
  * can and may also return registrations for today...by filtering an array on registrationDate evey time a call is made
  * we can add a sorted set sorted on dates and if the first registrationDate is not from today we need to filter it
  */
-@Consistency
 public class RegistrationsQueryHandler extends QueryHandler<RegistrationView> implements RegistrationsQuery {
 
-    private static SortByEmail SORT_BY_EMAIL;
+    private static final SortByEmail SORT_BY_EMAIL;
 
     static {
         SORT_BY_EMAIL = new SortByEmail();
@@ -91,12 +89,7 @@ public class RegistrationsQueryHandler extends QueryHandler<RegistrationView> im
 
     @Override
     public List<RegistrationView> list() {
-        try {
-            return readModel().stream().sorted(SORT_BY_EMAIL).collect(Collectors.toList());
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        return null;
+        return readModel().stream().sorted(SORT_BY_EMAIL).collect(Collectors.toList());
     }
 
     @Override
@@ -109,6 +102,7 @@ public class RegistrationsQueryHandler extends QueryHandler<RegistrationView> im
         return readModel().stream().filter(value -> value.getEmail().contentEquals(email)).findFirst();
     }
 
+    @SuppressWarnings("unused")
     void when(RegistrationCreated e) {
         readModel().addOrUpdate(new RegistrationView(e.getEmail(), e.getDate(), e.getAggregateId()));
     }

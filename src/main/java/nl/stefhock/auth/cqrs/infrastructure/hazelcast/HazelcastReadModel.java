@@ -16,10 +16,10 @@ import java.util.stream.Stream;
 public class HazelcastReadModel<T> extends ReadModel<T> {
 
     private final IAtomicReference<Long> atomicSequenceId;
-    private ISet<T> source;
+    private final ISet<T> source;
 
     // @FIXME MOVE TO A FACTORY METHOD
-    HazelcastReadModel(final String name, final ISet<T> set, final IAtomicReference<Long> sequenceId) {
+    private HazelcastReadModel(final String name, final ISet<T> set, final IAtomicReference<Long> sequenceId) {
         super(name);
         source = set;
         atomicSequenceId = sequenceId;
@@ -33,7 +33,7 @@ public class HazelcastReadModel<T> extends ReadModel<T> {
         return instance;
     }
 
-    protected void initialize() {
+    private void initialize() {
         Optional.ofNullable(atomicSequenceId.get()).ifPresent(value -> synced(value));
     }
 
