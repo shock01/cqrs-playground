@@ -1,6 +1,7 @@
 package nl.stefhock.auth.cqrs.domain.aggregates;
 
 
+import nl.stefhock.auth.app.domain.events.AuthEvent;
 import nl.stefhock.auth.cqrs.domain.Id;
 import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 import nl.stefhock.auth.cqrs.application.EventDelegator;
@@ -16,12 +17,12 @@ public abstract class Aggregate {
 
     protected Id id;
     private int version;
-    private List<DomainEvent> uncommittedEvents = new ArrayList<>();
+    private List<Object> uncommittedEvents = new ArrayList<>();
 
     public Aggregate() {
     }
 
-    protected void publish(DomainEvent event) {
+    protected void publish(Object event) {
         uncommittedEvents.add(event);
         apply(event);
     }
@@ -37,7 +38,7 @@ public abstract class Aggregate {
         }
     }
 
-    public List<DomainEvent> getUncommittedEvents() {
+    public List<Object> getUncommittedEvents() {
         return uncommittedEvents;
     }
 

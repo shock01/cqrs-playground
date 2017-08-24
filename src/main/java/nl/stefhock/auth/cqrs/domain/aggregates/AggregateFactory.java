@@ -7,10 +7,6 @@ import java.util.List;
 
 /**
  * Created by hocks on 29-12-2016.
- * <p>
- * this is jvm specific and will not run on all JVMS
- *
- * @see {http://www.javaspecialists.eu/archive/Issue175.html}
  */
 public class AggregateFactory {
 
@@ -30,7 +26,7 @@ public class AggregateFactory {
         final T t;
         try {
             t = create(cls);
-            events.stream().forEach(event -> t.apply(event));
+            events.stream().forEach(event -> t.apply(event.getPayload()));
         } catch (Exception e) {
             throw new RuntimeException("cannot instantiate aggregate", e);
         }

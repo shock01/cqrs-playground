@@ -7,6 +7,7 @@ import nl.stefhock.auth.cqrs.domain.aggregates.Aggregate;
 import nl.stefhock.auth.cqrs.domain.Id;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -22,8 +23,8 @@ public class Registration extends Aggregate {
     public void create(Id id, String email, String source) {
         final RegistrationCreated event = RegistrationCreated
                 .builder(id.getValue())
-                .withEmail(email)
-                .withSource(source)
+                .email(email)
+                .source(source)
                 .build();
         publish(event);
     }

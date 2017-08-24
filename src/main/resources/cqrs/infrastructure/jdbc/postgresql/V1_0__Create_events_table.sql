@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS events (
     aggregateId       char(36) NOT NULL,
     aggregateType     varchar(100) NOT NULL,
     eventType         varchar(100) NOT NULL,
+    eventDate         timestamp NOT NULL,
     version           integer NOT NULL,
     data              TEXT NOT NULL,
     sequence          serial NOT NULL,

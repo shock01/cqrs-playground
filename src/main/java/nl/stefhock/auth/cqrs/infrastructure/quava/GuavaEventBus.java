@@ -1,6 +1,7 @@
 package nl.stefhock.auth.cqrs.infrastructure.quava;
 
 import nl.stefhock.auth.cqrs.application.EventBus;
+import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 
 /**
  * Created by hocks on 14-7-2017.
@@ -21,7 +22,7 @@ public class GuavaEventBus implements EventBus {
     }
 
     @Override
-    public void post(Object event) {
+    public void post(DomainEvent event) {
         bus.post(event);
     }
 }

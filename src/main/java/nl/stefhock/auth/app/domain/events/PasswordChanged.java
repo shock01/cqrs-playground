@@ -1,9 +1,6 @@
 package nl.stefhock.auth.app.domain.events;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
-
-import java.util.Date;
 
 /**
  * Created by hocks on 5-7-2017.
@@ -16,13 +13,15 @@ public class PasswordChanged extends AuthEvent {
 
     private int iterations;
 
-    private PasswordChanged(String aggregateId,
-                            Date date) {
-        super(aggregateId, date);
+    private PasswordChanged(Builder builder) {
+        super(builder);
+        this.hash = builder.hash;
+        this.seed = builder.seed;
+        this.iterations = builder.iterations;
     }
 
     public static Builder builder(String aggregateId) {
-        return new Builder().withAggregateId(aggregateId);
+        return (Builder) new Builder().aggregateId(aggregateId);
     }
 
     public String getHash() {
@@ -49,28 +48,35 @@ public class PasswordChanged extends AuthEvent {
     /**
      * events should be immutable by design hence using builder pattern
      */
-    public static class Builder extends DomainEvent.Builder<PasswordChanged.Builder, PasswordChanged> {
+    public static class Builder extends AuthEvent.Builder {
 
         private static final int ITERATIONS = 20000;
+        private int iterations;
+        private String hash;
+        private String seed;
+
 
         Builder() {
-            super(new PasswordChanged(null, new Date()));
-            event.iterations = ITERATIONS;
+            this.iterations = ITERATIONS;
         }
 
-        public Builder withHash(String password) {
-            event.hash = password;
+        public Builder withHash(String hash) {
+            this.hash = hash;
             return this;
         }
 
         public Builder withSeed(String seed) {
-            event.seed = seed;
+            this.seed = seed;
             return this;
         }
 
         public Builder withIterations(int iterations) {
-            event.iterations = iterations;
+            this.iterations = iterations;
             return this;
+        }
+
+        public PasswordChanged build() {
+            return new PasswordChanged(this);
         }
     }
 }

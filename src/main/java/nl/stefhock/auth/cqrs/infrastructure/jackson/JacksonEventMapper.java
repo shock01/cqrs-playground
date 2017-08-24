@@ -3,9 +3,7 @@ package nl.stefhock.auth.cqrs.infrastructure.jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import nl.stefhock.auth.cqrs.application.EventMapper;
-import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 
 import java.io.IOException;
 
@@ -17,13 +15,13 @@ public class JacksonEventMapper implements EventMapper {
     private static final ObjectMapper objectMapper;
 
     static {
-        objectMapper = new ObjectMapper(new SmileFactory());
+        objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    private final Class<? extends DomainEvent> baseEvent;
+    private final Class<?> baseEvent;
 
-    public JacksonEventMapper(final Class<? extends DomainEvent> baseEvent) {
+    public JacksonEventMapper(final Class<?> baseEvent) {
         this.baseEvent = baseEvent;
     }
 
@@ -37,7 +35,7 @@ public class JacksonEventMapper implements EventMapper {
     }
 
     @Override
-    public <T extends DomainEvent> T toEvent(byte[] data) {
+    public <T> T toEvent(byte[] data) {
         try {
             return objectMapper.readValue(data, (Class<T>) baseEvent);
         } catch (IOException e) {

@@ -1,7 +1,7 @@
 package nl.stefhock.auth.app.domain.events;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
 import java.util.Date;
 
@@ -13,13 +13,14 @@ public class RegistrationCreated extends AuthEvent {
     private String email;
     private String source;
 
-    private RegistrationCreated(String aggregateId,
-                                Date date) {
-        super(aggregateId, date);
+    private RegistrationCreated(Builder builder) {
+        super(builder);
+        email = builder.email;
+        source = builder.source;
     }
 
     public static Builder builder(String aggregateId) {
-        return new Builder().withAggregateId(aggregateId);
+        return (Builder) new Builder().aggregateId(aggregateId);
     }
 
     public String getEmail() {
@@ -41,20 +42,26 @@ public class RegistrationCreated extends AuthEvent {
     /**
      * events should be immutable by design hence using builder pattern
      */
-    public static class Builder extends DomainEvent.Builder<RegistrationCreated.Builder, RegistrationCreated> {
+    @JsonPOJOBuilder(withPrefix = "")
+    public static class Builder extends AuthEvent.Builder {
 
-        Builder() {
-            super(new RegistrationCreated(null, new Date()));
-        }
+        private String email;
+        private String source;
+        private Date date;
 
-        public Builder withEmail(String email) {
-            event.email = email;
+        public Builder email(String email) {
+            this.email = email;
             return this;
         }
 
-        public Builder withSource(String source) {
-            event.source = source;
+        public Builder source(String source) {
+            this.source = source;
             return this;
         }
+
+        public RegistrationCreated build() {
+            return new RegistrationCreated(this);
+        }
+
     }
 }

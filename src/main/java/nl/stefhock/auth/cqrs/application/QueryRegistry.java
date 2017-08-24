@@ -78,8 +78,11 @@ public class QueryRegistry {
     @Subscribe
     @SuppressWarnings("unused")
     public void when(DomainEvent event) {
+        // @TODO add logic to verify the event sequence id and get a lock
         try {
-            lock.lock();
+            // should this be added to a queue or not...or just handled.
+            // the queue is not really needed but it will make sense to not make it
+            // block
             eventQueue.offer(event);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "registry is locked cannot queue event", e);
@@ -129,7 +132,7 @@ public class QueryRegistry {
         }
         events.subList(start, size)
                 .stream()
-                .forEach(event -> EventDelegator.when(handler, event));
+                .forEach(event -> EventDelegator.when(handler, event.getPayload()));
         // @todo current should come from event not from calculation
         handler.readModel().synced(offset + size);
 
@@ -150,9 +153,20 @@ public class QueryRegistry {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     final DomainEvent event = eventQueue.take();
+                    // @todo lock each readmodel
+                    // and only apply it when their sequenceid is lower
+                    // filter the collection in the lock
+                    // use a double lock
+                    // make sure that the eventSource id is 1 below
+                    // otherwise notify that the eventQueue is out of sync.
+                    // when its out of sync it should be distributing an event
+                    // on a different queue not used for domain events
+                    // there is no need to lock on startup...
+                    // so we need a method to indicate that we need to lockEventProcessing
+                    // which can be called in listenForEvents
                     registrars.values()
                             .parallelStream()
-                            .forEach(handler -> EventDelegator.when(handler, event));
+                            .forEach(handler -> EventDelegator.when(handler, event.getPayload()));
                 } catch (InterruptedException e) {
                     if (LOGGER.isLoggable(Level.WARNING)) {
                         LOGGER.log(Level.WARNING, "cannot get event from queue", e);

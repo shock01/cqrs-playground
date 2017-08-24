@@ -1,6 +1,5 @@
 package nl.stefhock.auth.app.application;
 
-import com.google.common.eventbus.EventBus;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;

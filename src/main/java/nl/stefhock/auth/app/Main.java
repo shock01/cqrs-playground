@@ -39,7 +39,6 @@ public class Main {
         application.start();
 
         // dummy things
-
         // new events
         i = 9;
         while (i-- > 0) {

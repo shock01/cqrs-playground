@@ -17,10 +17,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,7 +33,7 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
 
     private static final String SELECT_SQL = "SELECT * FROM events WHERE aggregateId=? AND aggregateType=? ORDER BY sequence";
 
-    private static final String INSERT_SQL = "INSERT INTO events (aggregateId, aggregateType, eventType, version, data) VALUES (?, ?, ?, ?, ?)";
+    private static final String INSERT_SQL = "INSERT INTO events (aggregateId, aggregateType, eventType, eventDate, version, data) VALUES (?, ?, ?, ?, ?, ?)";
 
     private static final String SELECT_MAX_SQL = "SELECT MAX(version) FROM events WHERE aggregateId=? AND aggregateType=?";
 
@@ -72,10 +69,15 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
                 return Collections.emptyList();
             }
             while (resultSet.next()) {
-                final byte[] data = resultSet.getBytes("data");
-                events.add(eventMapper.toEvent(data));
+                events.add(new DomainEvent.Builder()
+                        .aggregateId(resultSet.getString("aggregateId"))
+                        .sequence(resultSet.getLong("sequence"))
+                        .timestamp(resultSet.getDate("eventDate").getTime())
+                        .type(resultSet.getString("eventType"))
+                        .payload(eventMapper.toEvent(resultSet.getBytes("data")))
+                        .build());
             }
-            return events;
+            return Collections.unmodifiableList(events);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -85,41 +87,42 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
     public void save(final Aggregate aggregate) {
         final String aggregateType = aggregate.getClass().getName();
         final String aggregateId = aggregate.getId();
-        final List<DomainEvent> events = aggregate.getUncommittedEvents();
-        int version = aggregate.getVersion() - events.size();
+        final List<Object> events = aggregate.getUncommittedEvents();
+        final int totalEvents = events.size();
+        final int version = aggregate.getVersion() - totalEvents;
 
         verifyVersion(aggregate, events);
 
         try (final Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
-
+            int sequence = version;
             try (final PreparedStatement statement = connection.prepareStatement(INSERT_SQL)) {
-                int sequence = version;
-                for (final DomainEvent event : events) {
+                for (final Object event : events) {
                     sequence = ++sequence;
                     statement.setString(1, aggregateId);
                     statement.setString(2, aggregateType);
-                    statement.setString(3, event.getClass().getName());
-                    statement.setInt(4, sequence);
-                    statement.setBytes(5, eventMapper.toBytes(event));
+                    statement.setString(3, event.getClass().getSimpleName());
+                    statement.setDate(4, new java.sql.Date(new Date().getTime()));
+                    statement.setInt(5, sequence);
+                    statement.setBytes(6, eventMapper.toBytes(event));
                     statement.addBatch();
                 }
                 statement.executeBatch();
             }
             connection.commit();
-            dispatchEvents(aggregate);
+            aggregate.clearUncommittedEvents();
+            dispatchEvents(version + 1, totalEvents);
         } catch (Exception e) {
-            //logger.severe(String.format("Cannot store entity%n%s", e.getMessage()));
+            LOGGER.severe(String.format("Cannot store entity%n%s", e.getMessage()));
             throw new EntityStoreException("Cannot store entity", e);
         }
     }
 
-    private void dispatchEvents(final Aggregate aggregate) {
-        aggregate.getUncommittedEvents().forEach(eventBus::post);
-        aggregate.clearUncommittedEvents();
+    private void dispatchEvents(int version, int limit) {
+        getEvents(version, limit).stream().forEach(eventBus::post);
     }
 
-    private void verifyVersion(final Aggregate aggregate, final List<DomainEvent> events) {
+    private void verifyVersion(final Aggregate aggregate, final List<Object> events) {
         try (Connection connection = dataSource.getConnection()) {
             final String aggregateType = aggregate.getClass().getName();
             final int originalVersion = aggregate.getVersion() - events.size() + 1;
