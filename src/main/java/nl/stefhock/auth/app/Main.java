@@ -31,7 +31,7 @@ public class Main {
 
         final CommandBus commandBus = injector.getInstance(CommandBus.class);
         int i = 12;
-        while (i-- > 0) {
+        while (false && i-- > 0) {
             final CreateRegistration.RegistrationInfo info = new CreateRegistration.RegistrationInfo(String.format("%d@greetz.com", i), String.format("%d@greetz.com", i), null);
             commandBus.execute(new CreateRegistration(Id.generate(), info));
         }
@@ -41,7 +41,7 @@ public class Main {
         // dummy things
         // new events
         i = 9;
-        while (i-- > 0) {
+        while (false && i-- > 0) {
             final CreateRegistration.RegistrationInfo info = new CreateRegistration.RegistrationInfo(String.format("%d@greetz.com", i), String.format("%d@greetz.com", i), null);
             commandBus.execute(new CreateRegistration(Id.generate(), info));
         }

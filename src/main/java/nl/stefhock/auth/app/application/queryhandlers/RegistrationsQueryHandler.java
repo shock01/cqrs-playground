@@ -104,6 +104,9 @@ public class RegistrationsQueryHandler extends QueryHandler<RegistrationView> im
 
     @SuppressWarnings("unused")
     void when(RegistrationCreated e) {
+        // if already create //// the dispatch a new event //////
+        // or who will catch the throw /// and how to handle it ///
+        // something like how Jersey handles exceptions??? A customMapper for an exception
         readModel().addOrUpdate(new RegistrationView(e.getEmail(), e.getDate(), e.getAggregateId()));
     }
 

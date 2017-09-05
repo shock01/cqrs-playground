@@ -32,6 +32,13 @@ public class CreateRegistrationHandler implements CommandHandler<CreateRegistrat
         final Id id = Id.from(command.getUuid());
         final Registration registration = new Registration();
         registration.create(id, registrationInfo.getEmail(), registrationInfo.getSource());
+        // @todo verify also that it does not exist yet
+        // https://stackoverflow.com/questions/9495985/cqrs-event-sourcing-validate-username-uniqueness
+        // http://foreverframe.net/how-to-guarantee-username-uniqueness-with-cqrses/
+        // add sagas that will listen to user created and that will detect uniqueness
+        // and that will call RegistrationCancelledEvent with a reason
+        // where readmodel will inform the saga when it cannot be stored
+        // which means there should always be a read model
         final String seed = passwordStrategy.seed();
         int iterations = passwordStrategy.iterations();
         final Optional<String> hash = passwordStrategy.hash(registrationInfo.getPassword(), seed, iterations);

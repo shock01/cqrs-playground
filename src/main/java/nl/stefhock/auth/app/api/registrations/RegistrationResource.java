@@ -38,9 +38,9 @@ public class RegistrationResource {
      * @return
      */
     @POST
-    @ValidateOnExecution
+    //@ValidateOnExecution
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response register(@Valid final CreateRegistration.RegistrationInfo registration,
+    public Response register(final CreateRegistration.RegistrationInfo registration,
                              @Context UriInfo uriInfo) {
         final String uuid = Id.generate();
         commandBus.execute(new CreateRegistration(uuid, registration));

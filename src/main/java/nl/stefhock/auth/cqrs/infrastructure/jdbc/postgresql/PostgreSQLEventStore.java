@@ -31,7 +31,7 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
 
     private static final Logger LOGGER = Logger.getLogger(PostgreSQLEventStore.class.getName());
 
-    private static final String SELECT_SQL = "SELECT * FROM events WHERE aggregateId=? AND aggregateType=? ORDER BY sequence";
+    private static final String SELECT_SQL = "SELECT * FROM events WHERE aggregateId=? AND aggregateType=? ORDER BY version";
 
     private static final String INSERT_SQL = "INSERT INTO events (aggregateId, aggregateType, eventType, eventDate, version, data) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -39,9 +39,9 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
 
     private static final String SELECT_SEQUENCE_ID = "SELECT max(sequence) FROM events";
 
-    private static final String SELECT_EVENTS_SQL = "SELECT * FROM events ORDER BY sequence LIMIT ? OFFSET ?";
+    private static final String SELECT_EVENTS_SQL = "SELECT * FROM events ORDER BY sequence ASC LIMIT ? OFFSET ?";
 
-    private static final String SELECT_AGGREGATE_EVENTS_SQL = "SELECT * FROM events WHERE aggregateId=? AND version > ? ORDER BY sequence LIMIT ?";
+    private static final String SELECT_AGGREGATE_EVENTS_SQL = "SELECT * FROM events WHERE aggregateId=? AND version >= ? ORDER BY version ASC LIMIT ?";
 
     private final AggregateFactory factory;
 
@@ -95,15 +95,15 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
 
         try (final Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
-            int sequence = version;
+            int nextVersion = version;
             try (final PreparedStatement statement = connection.prepareStatement(INSERT_SQL)) {
                 for (final Object event : events) {
-                    sequence = ++sequence;
+                    nextVersion = ++nextVersion;
                     statement.setString(1, aggregateId);
                     statement.setString(2, aggregateType);
                     statement.setString(3, event.getClass().getSimpleName());
                     statement.setDate(4, new java.sql.Date(new Date().getTime()));
-                    statement.setInt(5, sequence);
+                    statement.setInt(5, nextVersion);
                     statement.setBytes(6, eventMapper.toBytes(event));
                     statement.addBatch();
                 }
@@ -111,15 +111,15 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
             }
             connection.commit();
             aggregate.clearUncommittedEvents();
-            dispatchEvents(version + 1, totalEvents);
+            dispatchAgregateEvents(aggregateId, version + 1, totalEvents);
         } catch (Exception e) {
             LOGGER.severe(String.format("Cannot store entity%n%s", e.getMessage()));
             throw new EntityStoreException("Cannot store entity", e);
         }
     }
 
-    private void dispatchEvents(int version, int limit) {
-        getEvents(version, limit).stream().forEach(eventBus::post);
+    private void dispatchAgregateEvents(String aggregateId, int version, int limit) {
+        getEventsForStream(aggregateId, version, limit).forEach(eventBus::post);
     }
 
     private void verifyVersion(final Aggregate aggregate, final List<Object> events) {

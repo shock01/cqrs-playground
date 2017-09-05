@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import nl.stefhock.auth.cqrs.application.Command;
 
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 
 /**
  * Created by hocks on 5-7-2017.
@@ -35,7 +34,6 @@ public class CreateRegistration extends Command {
         @NotNull(message = "email required")
         private final String email;
 
-        @Null
         private final String password;
 
         private final String source;
