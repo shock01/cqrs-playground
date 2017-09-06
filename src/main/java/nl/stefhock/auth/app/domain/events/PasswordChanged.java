@@ -1,5 +1,6 @@
 package nl.stefhock.auth.app.domain.events;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import nl.stefhock.auth.cqrs.domain.events.EventPayload;
@@ -10,6 +11,7 @@ import java.util.Date;
  * Created by hocks on 5-7-2017.
  */
 @JsonDeserialize(builder = PasswordChanged.Builder.class)
+@JsonTypeName("passwordChanged")
 public class PasswordChanged implements EventPayload {
     private final String aggregateId;
     private final Date date;

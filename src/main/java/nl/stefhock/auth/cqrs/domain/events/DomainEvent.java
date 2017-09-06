@@ -18,7 +18,7 @@ public final class DomainEvent {
     private final String aggregateId;
     private final Long sequence;
     private final long timestamp;
-    private Object payload;
+    private EventPayload payload;
 
     private DomainEvent(Builder builder) {
         aggregateId = builder.aggregateId;
@@ -44,12 +44,8 @@ public final class DomainEvent {
         return sequence;
     }
 
-    public Object getPayload() {
+    public EventPayload getPayload() {
         return payload;
-    }
-
-    public DomainEvent withPayload(Object payload) {
-        return new Builder().from(this).payload(payload).build();
     }
 
     @SuppressWarnings("unused")
@@ -62,7 +58,7 @@ public final class DomainEvent {
         private String aggregateId;
         private long timestamp;
         private Long sequence;
-        private Object payload;
+        private EventPayload payload;
         private String type;
 
         public Builder aggregateId(String aggregateId) {
@@ -80,7 +76,7 @@ public final class DomainEvent {
             return this;
         }
 
-        public Builder payload(Object payload) {
+        public Builder payload(EventPayload payload) {
             this.payload = payload;
             return this;
         }

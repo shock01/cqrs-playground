@@ -1,7 +1,30 @@
 package nl.stefhock.auth.cqrs.domain.events;
 
-import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import nl.stefhock.auth.app.domain.events.PasswordChanged;
+import nl.stefhock.auth.app.domain.events.RegistrationCreated;
 
+import java.util.Date;
+// @TODO this will break and will cause all problems when new events
+// are added by different services
+// use @Payload("tralala"), check weld playground for example of getting all types of events
+// then register all these payloads inside the EventMapper
+// and add a custom serializer maybe in Jackson that will serialize the Payload field
+// and is able to create like a map of known events
+// this also means that Eventpayload can be in cqrs package
+// use aspectJ to handle this
+// https://github.com/jponge/guice-aspectj-sample/tree/master/src/main/java/info/ponge/julien/hacks/guiceaspectj
+// aspects can also be used to get the sagas and the projections/queries
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "eventType")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = RegistrationCreated.class),
+        @JsonSubTypes.Type(value = PasswordChanged.class)
+})
 public interface EventPayload {
     String getAggregateId();
 

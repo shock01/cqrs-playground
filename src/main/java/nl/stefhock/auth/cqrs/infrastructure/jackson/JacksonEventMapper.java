@@ -7,6 +7,7 @@ import nl.stefhock.auth.app.domain.events.PasswordChanged;
 import nl.stefhock.auth.app.domain.events.RegistrationCreated;
 import nl.stefhock.auth.cqrs.application.EventMapper;
 import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
+import nl.stefhock.auth.cqrs.domain.events.EventPayload;
 
 import java.io.IOException;
 
@@ -39,22 +40,5 @@ public class JacksonEventMapper implements EventMapper {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public Class<?> classForType(String eventType) {
-        switch (eventType) {
-            case "RegistrationCreated":
-                return RegistrationCreated.class;
-            case "PasswordChanged":
-                return PasswordChanged.class;
-            default:
-                return null;
-        }
-    }
-
-    @Override
-    public <T> T payload(DomainEvent event) {
-        return objectMapper.convertValue(event.getPayload(), (Class<T>) classForType(event.getType()));
     }
 }

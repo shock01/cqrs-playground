@@ -65,6 +65,6 @@ public class HazelcastEventBus implements EventBus, MessageListener<String> {
             LOGGER.log(Level.INFO, String.format("receiving event message: %s", message.getMessageObject()));
         }
         final DomainEvent event = eventMapper.toEvent(message.getMessageObject().getBytes(), DomainEvent.class);
-        eventBus.post(event.withPayload(eventMapper.payload(event)));
+        eventBus.post(event);
     }
 }
