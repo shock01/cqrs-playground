@@ -1,5 +1,6 @@
 package nl.stefhock.auth.cqrs.application;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,9 +23,14 @@ public class EventDelegator {
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.log(Level.FINE, String.format("No such method: when, %s", event.getClass()));
             }
-        } catch (Exception e) {
+        } catch (IllegalAccessException e) {
             LOGGER.log(Level.SEVERE, "cannot delegate event", e);
             throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.log(Level.FINE, "invocation failed", e);
+            }
+            throw new RuntimeException(e.getTargetException());
         }
     }
 }

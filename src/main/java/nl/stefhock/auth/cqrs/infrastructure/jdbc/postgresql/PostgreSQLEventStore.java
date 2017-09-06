@@ -69,12 +69,14 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
                 return Collections.emptyList();
             }
             while (resultSet.next()) {
+                final String eventType = resultSet.getString("eventType");
+                final Object payload = eventMapper.toEvent(resultSet.getBytes("data"), eventMapper.classForType(eventType));
                 events.add(new DomainEvent.Builder()
                         .aggregateId(resultSet.getString("aggregateId"))
                         .sequence(resultSet.getLong("sequence"))
                         .timestamp(resultSet.getDate("eventDate").getTime())
-                        .type(resultSet.getString("eventType"))
-                        .payload(eventMapper.toEvent(resultSet.getBytes("data")))
+                        .type(eventType)
+                        .payload(payload)
                         .build());
             }
             return Collections.unmodifiableList(events);

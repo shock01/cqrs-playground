@@ -30,8 +30,8 @@ public class Main {
         injector.getInstance(DbMigration.class).migrate();
 
         final CommandBus commandBus = injector.getInstance(CommandBus.class);
-        int i = 12;
-        while (false && i-- > 0) {
+        int i = 1;
+        while (i-- > 0) {
             final CreateRegistration.RegistrationInfo info = new CreateRegistration.RegistrationInfo(String.format("%d@greetz.com", i), String.format("%d@greetz.com", i), null);
             commandBus.execute(new CreateRegistration(Id.generate(), info));
         }

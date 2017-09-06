@@ -7,6 +7,8 @@ import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.logging.Level;
@@ -15,6 +17,18 @@ import java.util.stream.Collectors;
 
 /**
  * Created by hocks on 17-8-2017.
+ * refactor this to be a EventListener Registry so that both Sagas as Handlers can be registered
+ * it should use a marker interface to defined certain classes as EventListener
+ * if we do that then there is also no need to manually subscribe them because we can inject them using quava
+ *
+ * so @Saga extends @EventListener
+ * and @Query extends @EventListener
+ * then this class will be EventListenerRegistry
+ * QueryHandler is not correct then we need a new interface that returns the sequenceInfo because now it's
+ * dependant on readModel
+ *
+ * @EventRegistar should have sequenceInfo then there is no need to have both interfaces??
+ * and we can just use a set instead
  */
 public class QueryRegistry {
 
@@ -120,7 +134,7 @@ public class QueryRegistry {
         }
 
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "readModels synced");
+            LOGGER.log(Level.INFO, "syncBatch done");
         }
     }
 
@@ -133,9 +147,7 @@ public class QueryRegistry {
         events.subList(start, size)
                 .stream()
                 .forEach(event -> EventDelegator.when(handler, event.getPayload()));
-        // @todo current should come from event not from calculation
         handler.readModel().synced(offset + size);
-
     }
 
     private Map<QueryHandler, Query> outOfSyncHandlers(long storeSequenceId) {
@@ -153,26 +165,46 @@ public class QueryRegistry {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     final DomainEvent event = eventQueue.take();
-                    // @todo lock each readmodel
-                    // and only apply it when their sequenceid is lower
-                    // filter the collection in the lock
-                    // use a double lock
-                    // make sure that the eventSource id is 1 below
-                    // otherwise notify that the eventQueue is out of sync.
-                    // when its out of sync it should be distributing an event
-                    // on a different queue not used for domain events
-                    // there is no need to lock on startup...
-                    // so we need a method to indicate that we need to lockEventProcessing
-                    // which can be called in listenForEvents
-                    registrars.values()
-                            .parallelStream()
-                            .forEach(handler -> EventDelegator.when(handler, event.getPayload()));
+                    Optional.ofNullable(tryDelegate(event))
+                            .ifPresent(throwables -> delegateThrowables(throwables));
                 } catch (InterruptedException e) {
                     if (LOGGER.isLoggable(Level.WARNING)) {
                         LOGGER.log(Level.WARNING, "cannot get event from queue", e);
                     }
                 }
             }
+        }
+
+        private void delegateThrowables(Set<Throwable> throwables) {
+            throwables.forEach(throwable -> registrars
+                    .values()
+                    .parallelStream()
+                    .forEach(handler -> EventDelegator.when(handler, throwable)));
+        }
+
+        private Set<Throwable> tryDelegate(DomainEvent event) {
+            // @todo lock each readmodel
+            // and only apply it when their sequenceid is lower
+            // filter the collection in the lock
+            // use a double lock
+            // make sure that the eventSource id is 1 below
+            // otherwise notify that the eventQueue is out of sync.
+            // when its out of sync it should be distributing an event
+            // on a different queue not used for domain events
+            // there is no need to lock on startup...
+            // so we need a method to indicate that we need to lockEventProcessing
+            // which can be called in listenForEvents
+            final Set<Throwable> throwables = new CopyOnWriteArraySet<>();
+            registrars.values()
+                    .parallelStream()
+                    .forEach(handler -> {
+                        try {
+                            EventDelegator.when(handler, event.getPayload());
+                        } catch (Exception e) {
+                            throwables.add(e.getCause());
+                        }
+                    });
+            return throwables.isEmpty() ? null : throwables;
         }
     }
 

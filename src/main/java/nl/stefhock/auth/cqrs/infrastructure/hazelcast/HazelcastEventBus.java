@@ -1,15 +1,13 @@
 package nl.stefhock.auth.cqrs.infrastructure.hazelcast;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import nl.stefhock.auth.cqrs.application.EventBus;
+import nl.stefhock.auth.cqrs.application.EventMapper;
 import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,22 +17,18 @@ import java.util.logging.Logger;
 public class HazelcastEventBus implements EventBus, MessageListener<String> {
 
     private static final Logger LOGGER = Logger.getLogger(HazelcastEventBus.class.getName());
-    private static final ObjectMapper objectMapper;
-
-    static {
-        objectMapper = new ObjectMapper();
-    }
-
     private final EventBus eventBus;
+    private final EventMapper eventMapper;
     private final ITopic<String> topic;
 
-    HazelcastEventBus(EventBus eventBus, ITopic<String> topic) {
+    HazelcastEventBus(EventBus eventBus, EventMapper eventMapper, ITopic<String> topic) {
         this.eventBus = eventBus;
+        this.eventMapper = eventMapper;
         this.topic = topic;
     }
 
-    public static EventBus factory(HazelcastInstance hazelcastInstance, EventBus eventBus) {
-        final HazelcastEventBus instance = new HazelcastEventBus(eventBus, hazelcastInstance.getTopic("events"));
+    public static EventBus factory(HazelcastInstance hazelcastInstance, EventBus eventBus, EventMapper eventMapper) {
+        final HazelcastEventBus instance = new HazelcastEventBus(eventBus, eventMapper, hazelcastInstance.getTopic("events"));
         instance.listenForEvents();
         return instance;
     }
@@ -57,28 +51,20 @@ public class HazelcastEventBus implements EventBus, MessageListener<String> {
 
     @Override
     public void post(DomainEvent event) {
+        final String message = new String(eventMapper.toBytes(event));
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "post event", event);
+            LOGGER.log(Level.INFO, String.format("message for topic: %s", message));
         }
-        try {
-            topic.publish(objectMapper.writeValueAsString(event));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        topic.publish(message);
+
     }
 
     @Override
     public void onMessage(Message<String> message) {
-        // java serializable will not work with non java code..
-        // what about protocol buffers ? nodejs ?? ObjectMapper ???
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.log(Level.INFO, String.format("receiving event message: %s", message.getMessageObject()));
         }
-        try {
-            final DomainEvent event = objectMapper.readValue(message.getMessageObject(), DomainEvent.class);
-            eventBus.post(event);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        final DomainEvent event = eventMapper.toEvent(message.getMessageObject().getBytes(), DomainEvent.class);
+        eventBus.post(event.withPayload(eventMapper.payload(event)));
     }
 }

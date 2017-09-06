@@ -25,4 +25,5 @@ public class GuavaEventBus implements EventBus {
     public void post(DomainEvent event) {
         bus.post(event);
     }
+
 }

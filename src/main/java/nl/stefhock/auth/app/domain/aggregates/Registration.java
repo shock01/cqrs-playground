@@ -7,7 +7,6 @@ import nl.stefhock.auth.cqrs.domain.aggregates.Aggregate;
 import nl.stefhock.auth.cqrs.domain.Id;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,9 +36,9 @@ public class Registration extends Aggregate {
      */
     public void setPassword(final String hash, final String seed, final int iteratios) {
         final PasswordChanged event = PasswordChanged.builder(id.getValue())
-                .withHash(hash)
-                .withSeed(seed)
-                .withIterations(iteratios)
+                .hash(hash)
+                .seed(seed)
+                .iterations(iteratios)
                 .build();
         publish(event);
     }

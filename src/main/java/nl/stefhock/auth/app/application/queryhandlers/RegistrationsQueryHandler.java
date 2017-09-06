@@ -4,6 +4,7 @@ import nl.stefhock.auth.app.application.queries.RegistrationView;
 import nl.stefhock.auth.app.application.queries.RegistrationsQuery;
 import nl.stefhock.auth.app.domain.events.RegistrationCreated;
 import nl.stefhock.auth.cqrs.application.QueryHandler;
+import nl.stefhock.auth.cqrs.infrastructure.AggregateExistsException;
 import nl.stefhock.auth.cqrs.infrastructure.ReadModel;
 
 import javax.inject.Inject;
@@ -103,11 +104,17 @@ public class RegistrationsQueryHandler extends QueryHandler<RegistrationView> im
     }
 
     @SuppressWarnings("unused")
-    void when(RegistrationCreated e) {
-        // if already create //// the dispatch a new event //////
-        // or who will catch the throw /// and how to handle it ///
-        // something like how Jersey handles exceptions??? A customMapper for an exception
-        readModel().addOrUpdate(new RegistrationView(e.getEmail(), e.getDate(), e.getAggregateId()));
+    void when(RegistrationCreated event) {
+        byEmail(event.getEmail()).ifPresent((view) -> {
+            throw new AggregateExistsException(event.getAggregateId(), event);
+        });
+        readModel().addOrUpdate(new RegistrationView(event.getEmail(), event.getDate(), event.getAggregateId()));
+    }
+
+    @SuppressWarnings("unused")
+    void when(AggregateExistsException exception) {
+        // @todo move to saga
+        System.out.println(exception);
     }
 
     private static class SortByEmail implements Comparator<RegistrationView> {

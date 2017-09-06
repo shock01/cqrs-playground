@@ -48,6 +48,10 @@ public final class DomainEvent {
         return payload;
     }
 
+    public DomainEvent withPayload(Object payload) {
+        return new Builder().from(this).payload(payload).build();
+    }
+
     @SuppressWarnings("unused")
     public String getType() {
         return type;
@@ -90,6 +94,14 @@ public final class DomainEvent {
             return new DomainEvent(this);
         }
 
+        Builder from(DomainEvent source) {
+            aggregateId = source.aggregateId;
+            timestamp = source.timestamp;
+            sequence = source.sequence;
+            payload = source.payload;
+            type = source.type;
+            return this;
+        }
     }
 
 

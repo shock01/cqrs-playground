@@ -11,6 +11,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.zaxxer.hikari.HikariDataSource;
 import nl.stefhock.auth.app.application.Configuration;
 import nl.stefhock.auth.cqrs.application.EventBus;
+import nl.stefhock.auth.cqrs.application.EventMapper;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateRepository;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 import nl.stefhock.auth.cqrs.infrastructure.hazelcast.HazelcastEventBus;
@@ -34,8 +35,8 @@ public class InfrastructureModule extends AbstractModule {
     @Provides
     @SuppressWarnings("unused")
     @Singleton
-    EventBus eventBus(HazelcastInstance hazelcastInstance) {
-        return HazelcastEventBus.factory(hazelcastInstance, new GuavaEventBus());
+    EventBus eventBus(HazelcastInstance hazelcastInstance, EventMapper eventMapper) {
+        return HazelcastEventBus.factory(hazelcastInstance, new GuavaEventBus(), eventMapper);
     }
 
     @Provides

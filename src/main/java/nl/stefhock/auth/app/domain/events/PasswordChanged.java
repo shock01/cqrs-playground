@@ -1,27 +1,57 @@
 package nl.stefhock.auth.app.domain.events;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import nl.stefhock.auth.cqrs.domain.events.EventPayload;
+
+import java.util.Date;
 
 /**
  * Created by hocks on 5-7-2017.
  */
 @JsonDeserialize(builder = PasswordChanged.Builder.class)
-public class PasswordChanged extends AuthEvent {
+public class PasswordChanged implements EventPayload {
+    private final String aggregateId;
+    private final Date date;
     private String hash;
-
     private String seed;
-
     private int iterations;
 
     private PasswordChanged(Builder builder) {
-        super(builder);
-        this.hash = builder.hash;
-        this.seed = builder.seed;
-        this.iterations = builder.iterations;
+
+        hash = builder.hash;
+        seed = builder.seed;
+        iterations = builder.iterations;
+        aggregateId = builder.aggregateId;
+        date = builder.date;
     }
 
     public static Builder builder(String aggregateId) {
         return (Builder) new Builder().aggregateId(aggregateId);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PasswordChanged that = (PasswordChanged) o;
+
+        if (iterations != that.iterations) return false;
+        if (!aggregateId.equals(that.aggregateId)) return false;
+        if (!date.equals(that.date)) return false;
+        if (!hash.equals(that.hash)) return false;
+        return seed.equals(that.seed);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = aggregateId.hashCode();
+        result = 31 * result + date.hashCode();
+        result = 31 * result + hash.hashCode();
+        result = 31 * result + seed.hashCode();
+        result = 31 * result + iterations;
+        return result;
     }
 
     public String getHash() {
@@ -36,19 +66,30 @@ public class PasswordChanged extends AuthEvent {
         return iterations;
     }
 
+    public String getAggregateId() {
+        return aggregateId;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
     @Override
     public String toString() {
         return "PasswordChanged{" +
-                "hash='" + hash + '\'' +
+                "aggregateId='" + aggregateId + '\'' +
+                ", date=" + date +
+                ", hash='" + hash + '\'' +
                 ", seed='" + seed + '\'' +
                 ", iterations=" + iterations +
-                "} " + super.toString();
+                '}';
     }
 
     /**
      * events should be immutable by design hence using builder pattern
      */
-    public static class Builder extends AuthEvent.Builder {
+    @JsonPOJOBuilder(withPrefix = "")
+    public static class Builder extends EventPayload.Builder {
 
         private static final int ITERATIONS = 20000;
         private int iterations;
@@ -60,17 +101,17 @@ public class PasswordChanged extends AuthEvent {
             this.iterations = ITERATIONS;
         }
 
-        public Builder withHash(String hash) {
+        public Builder hash(String hash) {
             this.hash = hash;
             return this;
         }
 
-        public Builder withSeed(String seed) {
+        public Builder seed(String seed) {
             this.seed = seed;
             return this;
         }
 
-        public Builder withIterations(int iterations) {
+        public Builder iterations(int iterations) {
             this.iterations = iterations;
             return this;
         }
