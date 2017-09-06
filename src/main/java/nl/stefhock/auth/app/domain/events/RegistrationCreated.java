@@ -18,7 +18,7 @@ public class RegistrationCreated implements EventPayload {
     private String email;
     private String source;
 
-    private RegistrationCreated(Builder builder) {
+    RegistrationCreated(Builder builder) {
         aggregateId = builder.aggregateId;
         date = builder.date;
         email = builder.email;

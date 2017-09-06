@@ -2,18 +2,18 @@ package nl.stefhock.auth.app.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.*;
-import nl.stefhock.auth.app.application.commandhandlers.CreateRegistrationHandler;
+import com.google.inject.multibindings.MultibindingsScanner;
 import nl.stefhock.auth.app.domain.DomainModule;
-import nl.stefhock.auth.app.domain.commands.CreateRegistration;
 import nl.stefhock.auth.app.infrastructure.InfrastructureModule;
 import nl.stefhock.auth.cqrs.application.CommandBus;
+import nl.stefhock.auth.cqrs.application.CommandHandler;
 import nl.stefhock.auth.cqrs.application.EventBus;
 import nl.stefhock.auth.cqrs.application.QueryRegistry;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
@@ -33,8 +33,7 @@ public class ApplicationModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(CommandBus.class).in(Singleton.class);
-        requestInjection(this);
+        install(MultibindingsScanner.asModule());
     }
 
     @Provides
@@ -53,10 +52,17 @@ public class ApplicationModule extends AbstractModule {
         return objectMapper.readValue(new File("conf/application.json"), Configuration.class);
     }
 
-    @Inject
+    @Provides
+    @Singleton
     @SuppressWarnings("unused")
-    void registrationCommandHandler(final CommandBus commandBus, final CreateRegistrationHandler createRegistrationHandler) {
-        commandBus.register(CreateRegistration.class, createRegistrationHandler);
+        // @todo inject a set of commandHandlers into the commandBus
+    CommandBus commandBus(Set<CommandHandler> handlers) {
+        final CommandBus commandBus = new CommandBus();
+        handlers.forEach(handler -> {
+            commandBus.register(handler.getType(), handler);
+        });
+        return commandBus;
     }
+
 
 }

@@ -16,7 +16,9 @@ import java.util.Date;
 // use aspectJ to handle this
 // https://github.com/jponge/guice-aspectj-sample/tree/master/src/main/java/info/ponge/julien/hacks/guiceaspectj
 // aspects can also be used to get the sagas and the projections/queries
-
+// or use serviceLoader to get all the classes, which is faster and simpler and does not require aspects
+// or use guice multibinder
+// http://www.johnchapman.net/technology/coding/guice-java-using-guice-4-0-multibinder-with-provides-and-providesintoset-or-providesintomap/
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
