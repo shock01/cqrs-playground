@@ -19,6 +19,7 @@ import java.util.Date;
 // or use serviceLoader to get all the classes, which is faster and simpler and does not require aspects
 // or use guice multibinder
 // http://www.johnchapman.net/technology/coding/guice-java-using-guice-4-0-multibinder-with-provides-and-providesintoset-or-providesintomap/
+// http://www.robinhowlett.com/blog/2015/03/19/custom-jackson-polymorphic-deserialization-without-type-metadata/
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,

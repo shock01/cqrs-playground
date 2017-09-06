@@ -40,12 +40,5 @@ public class CreateRegistrationHandler extends CommandHandler<CreateRegistration
         // @TODO handle not created password
         hash.ifPresent(value -> registration.setPassword(value, seed, iterations));
         aggregateRepository.save(registration);
-
-        // MessageQueue.dispatch()
-
-
-        // send out withEmail to user
-        // application event -> async -> we can use RabbitMQ, ZeroMQ, whatever
-        // broadcast system wide event
     }
 }

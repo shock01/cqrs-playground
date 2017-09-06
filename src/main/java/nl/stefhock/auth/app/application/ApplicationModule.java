@@ -5,10 +5,7 @@ import com.google.inject.*;
 import com.google.inject.multibindings.MultibindingsScanner;
 import nl.stefhock.auth.app.domain.DomainModule;
 import nl.stefhock.auth.app.infrastructure.InfrastructureModule;
-import nl.stefhock.auth.cqrs.application.CommandBus;
-import nl.stefhock.auth.cqrs.application.CommandHandler;
-import nl.stefhock.auth.cqrs.application.EventBus;
-import nl.stefhock.auth.cqrs.application.QueryRegistry;
+import nl.stefhock.auth.cqrs.application.*;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 
 import java.io.File;
@@ -39,11 +36,10 @@ public class ApplicationModule extends AbstractModule {
     @Provides
     @Singleton
     @SuppressWarnings("unused")
-    QueryRegistry queryRegistry(EventBus eventBus, EventStore eventStore) {
-        final ExecutorService executor = Executors.newFixedThreadPool(4);
-        final Lock lock = new ReentrantLock();
-        return new QueryRegistry(eventStore, eventBus, executor, lock);
+    ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
+
 
     @Provides
     @Singleton
@@ -55,14 +51,20 @@ public class ApplicationModule extends AbstractModule {
     @Provides
     @Singleton
     @SuppressWarnings("unused")
-        // @todo inject a set of commandHandlers into the commandBus
     CommandBus commandBus(Set<CommandHandler> handlers) {
         final CommandBus commandBus = new CommandBus();
-        handlers.forEach(handler -> {
-            commandBus.register(handler.getType(), handler);
-        });
+        handlers.forEach(handler -> commandBus.register(handler.getType(), handler));
         return commandBus;
     }
 
-
+    @Provides
+    @Singleton
+    @SuppressWarnings("unused")
+    QueryRegistry queryRegistry(EventBus eventBus, EventStore eventStore, Set<Query> queries) {
+        final ExecutorService executor = Executors.newFixedThreadPool(4);
+        final Lock lock = new ReentrantLock();
+        final QueryRegistry registry = new QueryRegistry(eventStore, eventBus, executor, lock);
+        queries.forEach(query -> registry.register(query));
+        return registry;
+    }
 }

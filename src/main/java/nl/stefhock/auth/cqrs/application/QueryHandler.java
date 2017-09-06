@@ -4,8 +4,12 @@ import nl.stefhock.auth.cqrs.infrastructure.ReadModel;
 
 /**
  * Created by hocks on 24-7-2017.
+ *
+ * Query extends Sequential
+ * Saga extends Sequential
+ *
  */
-public abstract class QueryHandler<T> {
+public abstract class QueryHandler<T> implements Query {
 
     private final ReadModel<T> readModel;
 
