@@ -24,7 +24,7 @@ public class EventDelegator {
                 LOGGER.log(Level.FINE, String.format("No such method: when, %s", event.getClass()));
             }
         } catch (IllegalAccessException e) {
-            LOGGER.log(Level.SEVERE, "cannot delegate event", e);
+            LOGGER.log(Level.SEVERE, "cannot delegate create", e);
             throw new RuntimeException(e);
         } catch (InvocationTargetException e) {
             if (LOGGER.isLoggable(Level.FINE)) {

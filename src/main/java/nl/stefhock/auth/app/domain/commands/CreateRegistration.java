@@ -14,7 +14,7 @@ public class CreateRegistration extends Command {
     private final String uuid;
 
     // @// FIXME: 5-7-2017 a command should validate it's input
-    // @// FIXME: 5-7-2017 a application event needs to be broadcasted
+    // @// FIXME: 5-7-2017 a application create needs to be broadcasted
     public CreateRegistration(final String uuid,
                               final RegistrationInfo registration) {
         this.uuid = uuid;

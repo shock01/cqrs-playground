@@ -3,6 +3,7 @@ package nl.stefhock.auth.app.domain.events;
 import nl.stefhock.auth.cqrs.domain.events.Event;
 
 import javax.json.JsonObject;
+import java.util.Date;
 import java.util.Optional;
 
 /**

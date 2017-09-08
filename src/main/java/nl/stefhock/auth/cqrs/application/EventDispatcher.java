@@ -61,14 +61,14 @@ public class EventDispatcher {
     @Subscribe
     @SuppressWarnings("unused")
     public void when(DomainEvent event) {
-        // @TODO add logic to verify the event sequence id and get a lock
+        // @TODO add logic to verify the create sequence id and get a lock
         try {
             // should this be added to a queue or not...or just handled.
             // the queue is not really needed but it will make sense to not make it
             // block
             eventQueue.offer(event);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "registry is locked cannot queue event", e);
+            LOGGER.log(Level.SEVERE, "registry is locked cannot queue create", e);
         }
     }
 
@@ -142,7 +142,7 @@ public class EventDispatcher {
                             .ifPresent(this::delegateThrowables);
                 } catch (InterruptedException e) {
                     if (LOGGER.isLoggable(Level.WARNING)) {
-                        LOGGER.log(Level.WARNING, "cannot get event from queue", e);
+                        LOGGER.log(Level.WARNING, "cannot get create from queue", e);
                     }
                 }
             }
@@ -161,7 +161,7 @@ public class EventDispatcher {
             // use a double lock
             // make sure that the eventSource id is 1 below
             // otherwise notify that the eventQueue is out of sync.
-            // when its out of sync it should be distributing an event
+            // when its out of sync it should be distributing an create
             // on a different queue not used for domain events
             // there is no need to lock on startup...
             // so we need a method to indicate that we need to lockEventProcessing

@@ -7,6 +7,7 @@ import nl.stefhock.auth.cqrs.domain.aggregates.Aggregate;
 import nl.stefhock.auth.cqrs.domain.Id;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**

@@ -3,7 +3,8 @@ package nl.stefhock.auth.cqrs.domain.events;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 // @TODO this will break and will cause all problems when new events
 // are added by different services
@@ -22,8 +23,10 @@ import java.util.Date;
 
 public abstract class Event {
 
+    public static final String EVENT_TYPE = "eventType";
+
     protected final String aggregateId;
-    protected final Date date;
+    protected final ZonedDateTime date;
 
     protected Event(Builder builder) {
         aggregateId = builder.aggregateId;
@@ -42,40 +45,41 @@ public abstract class Event {
         return aggregateId;
     }
 
-    public Date date() {
+    public ZonedDateTime date() {
         return date;
     }
 
     public String eventType() {
-        return getClass().getSimpleName();
+        // @todo make configurable using annotation
+        return getClass().getSimpleName().toLowerCase();
     }
 
     public abstract JsonObject toJSON();
 
     protected JsonObjectBuilder jsonBuilder() {
         return Json.createObjectBuilder()
+                .add(EVENT_TYPE, eventType())
                 .add("aggregateId", aggregateId)
-                .add("date", date.getTime())
-                .add("eventType", eventType());
+                .add("date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     protected static class Builder {
         protected String aggregateId;
-        protected Date date = new Date();
+        protected ZonedDateTime date = ZonedDateTime.now();
 
         public Builder aggregateId(String aggregateId) {
             this.aggregateId = aggregateId;
             return this;
         }
 
-        public Builder date(Date date) {
+        public Builder date(ZonedDateTime date) {
             this.date = date;
             return this;
         }
 
         public Builder fromJson(JsonObject jsonObject) {
             aggregateId = jsonObject.getString("aggregateId");
-            date = new Date(jsonObject.getInt("date"));
+            date = ZonedDateTime.parse(jsonObject.getString("date"), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
             return this;
         }
     }

@@ -63,7 +63,7 @@ public class PasswordChanged extends Event {
         private String seed;
 
 
-        Builder() {
+        public Builder() {
             this.iterations = ITERATIONS;
         }
 

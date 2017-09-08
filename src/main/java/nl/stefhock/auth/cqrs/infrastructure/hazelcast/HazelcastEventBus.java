@@ -62,7 +62,7 @@ public class HazelcastEventBus implements EventBus, MessageListener<String> {
     @Override
     public void onMessage(Message<String> message) {
         if (LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, String.format("receiving event message: %s", message.getMessageObject()));
+            LOGGER.log(Level.INFO, String.format("receiving create message: %s", message.getMessageObject()));
         }
         final DomainEvent event = eventCodec.decodeDomainEvent(message.getMessageObject().getBytes());
         eventBus.post(event);

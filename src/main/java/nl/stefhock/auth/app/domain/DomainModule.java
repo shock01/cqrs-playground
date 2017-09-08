@@ -1,9 +1,8 @@
 package nl.stefhock.auth.app.domain;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import nl.stefhock.auth.cqrs.application.EventCodec;
+import nl.stefhock.auth.cqrs.domain.EventFactory;
 import nl.stefhock.auth.cqrs.infrastructure.javax.json.JsonEventCodec;
 
 /**
@@ -12,13 +11,7 @@ import nl.stefhock.auth.cqrs.infrastructure.javax.json.JsonEventCodec;
 public class DomainModule extends AbstractModule {
     @Override
     protected void configure() {
-
-    }
-
-    @Provides
-    @Singleton
-    @SuppressWarnings("unused")
-    EventCodec eventCodec() {
-        return new JsonEventCodec();
+        bind(EventFactory.class).to(JsonEventFactory.class);
+        bind(EventCodec.class).to(JsonEventCodec.class);
     }
 }

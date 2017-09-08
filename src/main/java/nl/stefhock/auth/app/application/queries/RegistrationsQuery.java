@@ -7,6 +7,7 @@ import nl.stefhock.auth.cqrs.infrastructure.ReadModel;
 
 import javax.inject.Inject;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -14,14 +15,14 @@ import java.util.stream.Collectors;
 /**
  * Created by hocks on 5-7-2017.
  * <p>
- * should store the projection outside of the event stream
+ * should store the projection outside of the create stream
  * should listen to domain events
  * should rebuild
  * should have logic to pause events and handle them after reading the state
  * <p>
  * should have a addOrUpdate and tryDelete on a ProjectionWriter (interface)
  *
- * @// FIXME: 13-7-2017 how to know the last event id since last sync because AggregateRepository does
+ * @// FIXME: 13-7-2017 how to know the last create id since last sync because AggregateRepository does
  * @// FIXME: 13-7-2017 implement syncing when events have passed (http://squirrel.pl/blog/2015/09/14/achieving-consistency-in-cqrs-with-linear-event-store/)
  * @// FIXME: 13-7-2017 add IQueryWriter and IQueryReader with a MemoryBased implementation (HashMap)
  * @// FIXME: 13-7-2017 could use aspects like sync async to determine if the eventStore should be read to sync
@@ -35,9 +36,9 @@ import java.util.stream.Collectors;
  * <p>
  * not have methods to get last eventSequenceId that is stored
  * <p>
- * Should we also implement the interface IEventStore ???? to get like an aggregate by id and event offset
+ * Should we also implement the interface IEventStore ???? to get like an aggregate by id and create offset
  * and the total events
- * we can actually just decorate the whole thing and abstract the synchronization and have a generic event handler
+ * we can actually just decorate the whole thing and abstract the synchronization and have a generic create handler
  * that will dispatch again on the delegate
  * its like linear consistency is a decorator thing
  * <p>
@@ -55,15 +56,15 @@ import java.util.stream.Collectors;
  * <p>
  * new ConsistentRegistrationsQuery(linearConsistencyStrategy, projection) -> will always sync before execution
  * new ConsistentRegistrationsQuery(pollingConsistencyStrategy, projection) -> will sync at a certain interval
- * new ConsistentRegistrationsQuery(eventBasedStrategy, projection) -> will sync when a domain event is dispatched
+ * new ConsistentRegistrationsQuery(eventBasedStrategy, projection) -> will sync when a domain create is dispatched
  * <p>
  * can a viewModel listen to Aggregates out side of the system ?? or are these domain events....system wide events
  * or should aggregates never be connected .....because that will be really complex...they should be changed
- * by commands not domain events....because a command changes an event does not..maybe all events should also be
- * dispatched as a system event on an async eventbus....because then we can do other things....
+ * by commands not domain events....because a command changes an create does not..maybe all events should also be
+ * dispatched as a system create on an async eventbus....because then we can do other things....
  * maybe these events should be distributed over kafka or anything that is fast enough
- * maybe a event should be marked as a domain event...or should the command do this?? better to do in command
- * to prevent definite loop of event and event handling
+ * maybe a create should be marked as a domain create...or should the command do this?? better to do in command
+ * to prevent definite loop of create and create handling
  * <p>
  * <p>
  * add the projectionReader and projectionWriter interface
@@ -108,7 +109,7 @@ public class RegistrationsQuery implements Query {
         byEmail(event.email()).ifPresent((view) -> {
             throw new AggregateExistsException(event.aggregateId(), event);
         });
-        readModel.addOrUpdate(new RegistrationView(event.email(), event.date(), event.aggregateId()));
+        readModel.addOrUpdate(new RegistrationView(event.email(), Date.from(event.date().toInstant()), event.aggregateId()));
     }
 
     @SuppressWarnings("unused")

@@ -6,6 +6,9 @@ import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
@@ -20,6 +23,7 @@ public class RegistrationView implements DataSerializable {
     @JsonProperty
     private String uuid;
 
+    @SuppressWarnings("unused")
     public RegistrationView() {
     }
 

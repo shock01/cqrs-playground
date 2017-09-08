@@ -1,9 +1,11 @@
 package nl.stefhock.auth.cqrs.infrastructure.javax.json;
 
 import nl.stefhock.auth.cqrs.application.EventCodec;
+import nl.stefhock.auth.cqrs.domain.EventFactory;
 import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 import nl.stefhock.auth.cqrs.domain.events.Event;
 
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -12,6 +14,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 public class JsonEventCodec implements EventCodec {
+
+    private final EventFactory eventFactory;
+
+    @Inject
+    public JsonEventCodec(EventFactory eventFactory) {
+        this.eventFactory = eventFactory;
+    }
 
     @Override
     public byte[] encodeDomainEvent(DomainEvent event) {
@@ -29,19 +38,19 @@ public class JsonEventCodec implements EventCodec {
         final JsonObject jsonObject = reader.readObject();
         reader.close();
 
-        // convert this please, builder should have a fromJSON method
-        jsonObject.getJsonObject("payload");
-        Event payload = null; // @todo we need some kinda factory to know which events we have and how to map them, we can add like
-        // an annotation to @Event("registrationCreated") or use default className if not present, or @Named
         return new DomainEvent.Builder()
                 .fromJson(jsonObject)
-                .payload(payload)
+                .payload(eventFactory.create(jsonObject.getJsonObject("payload")))
                 .build();
     }
 
     @Override
     public Event decodeEvent(byte[] data, Class<Event> type) {
-        return null;
+        final ByteArrayInputStream in = new ByteArrayInputStream(data);
+        final JsonReader reader = Json.createReader(in);
+        final JsonObject jsonObject = reader.readObject();
+        reader.close();
+        return eventFactory.create(jsonObject);
     }
 
     @Override
