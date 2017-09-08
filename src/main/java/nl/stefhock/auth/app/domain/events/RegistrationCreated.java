@@ -1,26 +1,20 @@
 package nl.stefhock.auth.app.domain.events;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import nl.stefhock.auth.cqrs.domain.events.EventPayload;
+import nl.stefhock.auth.cqrs.domain.events.Event;
 
-import java.util.Date;
+import javax.json.JsonObject;
+import java.util.Optional;
 
 /**
  * Created by hocks on 5-7-2017.
  */
-@JsonDeserialize(builder = RegistrationCreated.Builder.class)
-@JsonTypeName("registrationCreated")
-public class RegistrationCreated implements EventPayload {
-    private final String aggregateId;
-    private final Date date;
+public class RegistrationCreated extends Event {
+
     private String email;
     private String source;
 
     RegistrationCreated(Builder builder) {
-        aggregateId = builder.aggregateId;
-        date = builder.date;
+        super(builder);
         email = builder.email;
         source = builder.source;
     }
@@ -29,34 +23,12 @@ public class RegistrationCreated implements EventPayload {
         return (Builder) new Builder().aggregateId(aggregateId);
     }
 
-    public String getEmail() {
+    public String email() {
         return email;
     }
 
-    public String getSource() {
+    public String source() {
         return source;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        RegistrationCreated that = (RegistrationCreated) o;
-
-        if (!aggregateId.equals(that.aggregateId)) return false;
-        if (!date.equals(that.date)) return false;
-        if (!email.equals(that.email)) return false;
-        return source.equals(that.source);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = aggregateId.hashCode();
-        result = 31 * result + date.hashCode();
-        result = 31 * result + email.hashCode();
-        result = 31 * result + source.hashCode();
-        return result;
     }
 
     @Override
@@ -67,19 +39,15 @@ public class RegistrationCreated implements EventPayload {
                 "} " + super.toString();
     }
 
-    public String getAggregateId() {
-        return aggregateId;
+    @Override
+    public JsonObject toJSON() {
+        return jsonBuilder()
+                .add("email", email)
+                .add("source", Optional.ofNullable(source).orElse(""))
+                .build();
     }
 
-    public Date getDate() {
-        return date;
-    }
-
-    /**
-     * events should be immutable by design hence using builder pattern
-     */
-    @JsonPOJOBuilder(withPrefix = "")
-    public static class Builder extends EventPayload.Builder {
+    public static class Builder extends Event.Builder {
 
         private String email;
         private String source;
@@ -91,6 +59,13 @@ public class RegistrationCreated implements EventPayload {
 
         public Builder source(String source) {
             this.source = source;
+            return this;
+        }
+
+        public Builder fromJson(JsonObject jsonObject) {
+            super.fromJson(jsonObject);
+            this.email = jsonObject.getString("email");
+            this.source = jsonObject.getString("source");
             return this;
         }
 

@@ -5,7 +5,7 @@ import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
 import nl.stefhock.auth.cqrs.application.EventBus;
-import nl.stefhock.auth.cqrs.application.EventMapper;
+import nl.stefhock.auth.cqrs.application.EventCodec;
 import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 
 import java.util.logging.Level;
@@ -18,17 +18,17 @@ public class HazelcastEventBus implements EventBus, MessageListener<String> {
 
     private static final Logger LOGGER = Logger.getLogger(HazelcastEventBus.class.getName());
     private final EventBus eventBus;
-    private final EventMapper eventMapper;
+    private final EventCodec eventCodec;
     private final ITopic<String> topic;
 
-    HazelcastEventBus(EventBus eventBus, EventMapper eventMapper, ITopic<String> topic) {
+    HazelcastEventBus(EventBus eventBus, EventCodec eventCodec, ITopic<String> topic) {
         this.eventBus = eventBus;
-        this.eventMapper = eventMapper;
+        this.eventCodec = eventCodec;
         this.topic = topic;
     }
 
-    public static EventBus factory(HazelcastInstance hazelcastInstance, EventBus eventBus, EventMapper eventMapper) {
-        final HazelcastEventBus instance = new HazelcastEventBus(eventBus, eventMapper, hazelcastInstance.getTopic("events"));
+    public static EventBus factory(HazelcastInstance hazelcastInstance, EventBus eventBus, EventCodec eventCodec) {
+        final HazelcastEventBus instance = new HazelcastEventBus(eventBus, eventCodec, hazelcastInstance.getTopic("events"));
         instance.listenForEvents();
         return instance;
     }
@@ -51,7 +51,7 @@ public class HazelcastEventBus implements EventBus, MessageListener<String> {
 
     @Override
     public void post(DomainEvent event) {
-        final String message = new String(eventMapper.toBytes(event));
+        final String message = new String(eventCodec.encodeDomainEvent(event));
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.log(Level.INFO, String.format("message for topic: %s", message));
         }
@@ -64,7 +64,7 @@ public class HazelcastEventBus implements EventBus, MessageListener<String> {
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.log(Level.INFO, String.format("receiving event message: %s", message.getMessageObject()));
         }
-        final DomainEvent event = eventMapper.toEvent(message.getMessageObject().getBytes(), DomainEvent.class);
+        final DomainEvent event = eventCodec.decodeDomainEvent(message.getMessageObject().getBytes());
         eventBus.post(event);
     }
 }

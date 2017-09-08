@@ -43,18 +43,19 @@ public class Registration extends Aggregate {
         publish(event);
     }
 
+    @SuppressWarnings("unused")
     void when(RegistrationCreated event) {
-        id = Id.from(event.getAggregateId());
-        email = event.getEmail();
-        source = event.getSource();
+        id = Id.from(event.aggregateId());
+        email = event.email();
+        source = event.source();
     }
-
+    @SuppressWarnings("unused")
     void when(PasswordChanged event) {
 
         final Password password = Password.builder()
-                .withHash(event.getHash())
-                .withIterations(event.getIterations())
-                .withSeed(event.getSeed()).build();
+                .withHash(event.hash())
+                .withIterations(event.iterations())
+                .withSeed(event.seed()).build();
 
         passwords.add(password);
         this.password = password;

@@ -1,9 +1,7 @@
 package nl.stefhock.auth.app.application.queries;
 
-import nl.stefhock.auth.app.application.queries.RegistrationView;
-import nl.stefhock.auth.app.application.queries.RegistrationsQuery;
 import nl.stefhock.auth.app.domain.events.RegistrationCreated;
-import nl.stefhock.auth.cqrs.application.QueryHandler;
+import nl.stefhock.auth.cqrs.application.Query;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateExistsException;
 import nl.stefhock.auth.cqrs.infrastructure.ReadModel;
 
@@ -78,7 +76,7 @@ import java.util.stream.Collectors;
 
 
 // @todo do we need a Handler or can we just name it Registrations
-public class RegistrationsQuery extends QueryHandler<RegistrationView> {
+public class RegistrationsQuery implements Query {
 
     private static final SortByEmail SORT_BY_EMAIL;
 
@@ -86,45 +84,47 @@ public class RegistrationsQuery extends QueryHandler<RegistrationView> {
         SORT_BY_EMAIL = new SortByEmail();
     }
 
+    private final ReadModel<RegistrationView> readModel;
+
     @Inject
     public RegistrationsQuery(final ReadModel<RegistrationView> readModel) {
-        super(readModel);
+        this.readModel = readModel;
     }
 
     public List<RegistrationView> list() {
-        return readModel().stream().sorted(SORT_BY_EMAIL).collect(Collectors.toList());
+        return readModel.stream().sorted(SORT_BY_EMAIL).collect(Collectors.toList());
     }
 
     public Optional<RegistrationView> byId(String uuid) {
-        return readModel().stream().filter(value -> value.getUuid().contentEquals(uuid)).findFirst();
+        return readModel.stream().filter(value -> value.getUuid().contentEquals(uuid)).findFirst();
     }
 
     public Optional<RegistrationView> byEmail(String email) {
-        return readModel().stream().filter(value -> value.getEmail().contentEquals(email)).findFirst();
+        return readModel.stream().filter(value -> value.getEmail().contentEquals(email)).findFirst();
     }
 
     @SuppressWarnings("unused")
     void when(RegistrationCreated event) {
-        byEmail(event.getEmail()).ifPresent((view) -> {
-            throw new AggregateExistsException(event.getAggregateId(), event);
+        byEmail(event.email()).ifPresent((view) -> {
+            throw new AggregateExistsException(event.aggregateId(), event);
         });
-        readModel().addOrUpdate(new RegistrationView(event.getEmail(), event.getDate(), event.getAggregateId()));
+        readModel.addOrUpdate(new RegistrationView(event.email(), event.date(), event.aggregateId()));
     }
 
     @SuppressWarnings("unused")
-    // @TODO use: when throwing!!! instead
+        // @TODO use: when throwing!!! instead
     void when(AggregateExistsException exception) {
         System.out.println(exception);
     }
 
     @Override
     public long sequenceId() {
-        return readModel().sequenceId();
+        return readModel.sequenceId();
     }
 
     @Override
     public void synced(long sequenceId) {
-        readModel().synced(sequenceId);
+        readModel.synced(sequenceId);
     }
 
     private static class SortByEmail implements Comparator<RegistrationView> {

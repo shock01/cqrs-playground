@@ -1,6 +1,6 @@
 package nl.stefhock.auth.app.application;
 
-import nl.stefhock.auth.cqrs.application.QueryRegistry;
+import nl.stefhock.auth.cqrs.application.Registry;
 
 import javax.inject.Inject;
 
@@ -9,10 +9,10 @@ import javax.inject.Inject;
  */
 public class Application {
 
-    private final QueryRegistry registry;
+    private final Registry registry;
 
     @Inject
-    public Application(QueryRegistry registry) {
+    public Application(Registry registry) {
         this.registry = registry;
     }
 

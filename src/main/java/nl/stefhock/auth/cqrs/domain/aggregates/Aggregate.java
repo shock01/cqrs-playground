@@ -3,6 +3,7 @@ package nl.stefhock.auth.cqrs.domain.aggregates;
 
 import nl.stefhock.auth.cqrs.domain.Id;
 import nl.stefhock.auth.cqrs.application.EventDelegator;
+import nl.stefhock.auth.cqrs.domain.events.Event;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,18 +15,18 @@ public abstract class Aggregate {
 
     protected Id id;
     private int version;
-    private List<Object> uncommittedEvents = new ArrayList<>();
+    private List<Event> uncommittedEvents = new ArrayList<>();
 
     public Aggregate() {
     }
 
-    protected void publish(Object event) {
+    protected void publish(Event event) {
         uncommittedEvents.add(event);
         apply(event);
     }
 
 
-    void apply(Object event) {
+    void apply(Event event) {
         version++;
         try {
             EventDelegator.when(this, event);
@@ -35,7 +36,7 @@ public abstract class Aggregate {
         }
     }
 
-    public List<Object> getUncommittedEvents() {
+    public List<Event> getUncommittedEvents() {
         return uncommittedEvents;
     }
 

@@ -2,6 +2,7 @@ package nl.stefhock.auth.app.infrastructure;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.JoinConfig;
@@ -10,8 +11,9 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.zaxxer.hikari.HikariDataSource;
 import nl.stefhock.auth.app.application.Configuration;
+import nl.stefhock.auth.cqrs.application.CommandBus;
 import nl.stefhock.auth.cqrs.application.EventBus;
-import nl.stefhock.auth.cqrs.application.EventMapper;
+import nl.stefhock.auth.cqrs.application.EventCodec;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateRepository;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 import nl.stefhock.auth.cqrs.infrastructure.hazelcast.HazelcastEventBus;
@@ -30,13 +32,14 @@ public class InfrastructureModule extends AbstractModule {
         bind(PostgreSQLEventStore.class).in(Singleton.class);
         bind(AggregateRepository.class).to(PostgreSQLEventStore.class);
         bind(EventStore.class).to(PostgreSQLEventStore.class);
+        bind(CommandBus.class).in(Scopes.SINGLETON);
     }
 
     @Provides
     @SuppressWarnings("unused")
     @Singleton
-    EventBus eventBus(HazelcastInstance hazelcastInstance, EventMapper eventMapper) {
-        return HazelcastEventBus.factory(hazelcastInstance, new GuavaEventBus(), eventMapper);
+    EventBus eventBus(HazelcastInstance hazelcastInstance, EventCodec eventCodec) {
+        return HazelcastEventBus.factory(hazelcastInstance, new GuavaEventBus(), eventCodec);
     }
 
     @Provides

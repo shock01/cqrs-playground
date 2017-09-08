@@ -40,7 +40,6 @@ public class ApplicationModule extends AbstractModule {
         return new ObjectMapper();
     }
 
-
     @Provides
     @Singleton
     @SuppressWarnings("unused")
@@ -51,20 +50,15 @@ public class ApplicationModule extends AbstractModule {
     @Provides
     @Singleton
     @SuppressWarnings("unused")
-    CommandBus commandBus(Set<CommandHandler> handlers) {
-        final CommandBus commandBus = new CommandBus();
-        handlers.forEach(handler -> commandBus.register(handler.getType(), handler));
-        return commandBus;
-    }
-
-    @Provides
-    @Singleton
-    @SuppressWarnings("unused")
-    QueryRegistry queryRegistry(EventBus eventBus, EventStore eventStore, Set<Query> queries) {
+    Registry registry(CommandBus commandBus,
+                      EventBus eventBus,
+                      EventStore eventStore,
+                      Set<Query> queries,
+                      Set<CommandHandler> handlers) {
         final ExecutorService executor = Executors.newFixedThreadPool(4);
-        final Lock lock = new ReentrantLock();
-        final QueryRegistry registry = new QueryRegistry(eventStore, eventBus, executor, lock);
-        queries.forEach(query -> registry.register(query));
+        final Registry registry = new Registry(commandBus, eventStore, eventBus, executor);
+        queries.forEach(registry::register);
+        handlers.forEach(registry::register);
         return registry;
     }
 }

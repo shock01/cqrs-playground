@@ -17,7 +17,6 @@ import static nl.stefhock.auth.app.infrastructure.jersey.JerseyResourceConfig.ne
 
 public class Main {
 
-
     public static void main(String[] args) throws Exception {
 
         SLF4JBridgeHandler.removeHandlersForRootLogger();

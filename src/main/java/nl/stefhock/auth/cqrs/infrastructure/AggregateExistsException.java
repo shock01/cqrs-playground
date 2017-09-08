@@ -1,15 +1,15 @@
 package nl.stefhock.auth.cqrs.infrastructure;
 
-import nl.stefhock.auth.cqrs.domain.events.EventPayload;
+import nl.stefhock.auth.cqrs.domain.events.Event;
 
 /**
  * Created by hocks on 27-12-2016.
  */
 public class AggregateExistsException extends RuntimeException {
     private final String aggregateId;
-    private final EventPayload source;
+    private final Event source;
 
-    public AggregateExistsException(String aggregateId, EventPayload source) {
+    public AggregateExistsException(String aggregateId, Event source) {
         super(String.format("Aggregate already exists: %s", aggregateId));
         this.aggregateId = aggregateId;
         this.source = source;
@@ -19,7 +19,7 @@ public class AggregateExistsException extends RuntimeException {
         return aggregateId;
     }
 
-    public EventPayload source() {
+    public Event source() {
         return source;
     }
 

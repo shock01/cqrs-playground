@@ -4,41 +4,21 @@ import com.google.common.eventbus.Subscribe;
 import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-/**
- * Created by hocks on 17-8-2017.
- * refactor this to be a EventListener Registry so that both Sagas as Handlers can be registered
- * it should use a marker interface to defined certain classes as EventListener
- * if we do that then there is also no need to manually subscribe them because we can inject them using quava
- * <p>
- * so @Saga extends @EventListener
- * and @Query extends @EventListener
- * then this class will be EventListenerRegistry
- * QueryHandler is not correct then we need a new interface that returns the sequenceInfo because now it's
- * dependant on readModel
- *
- * @EventRegistar should have sequenceInfo then there is no need to have both interfaces??
- * and we can just use a set instead
- *
- * sp;it up into registry and dispatcher
- */
-public class QueryRegistry {
+public class EventDispatcher {
 
-    // @TODO the sync stuff should be in a different class, single purpose
-    private static final Logger LOGGER = Logger.getLogger(QueryRegistry.class.getName());
-    // @TODO make me configurable
-    private static final int BATCH_SIZE = 10;
-
-    private final Set<Sequential> registrars = new CopyOnWriteArraySet<Sequential>();
+    private static final Logger LOGGER = Logger.getLogger(EventDispatcher.class.getName());
+    // @TODO make me configurable if needed
+    private static final int BATCH_SIZE = 1000;
 
     private final BlockingQueue<DomainEvent> eventQueue = new LinkedBlockingQueue<>();
 
@@ -46,48 +26,35 @@ public class QueryRegistry {
     private final EventBus eventBus;
     private final Executor executor;
     private final Lock lock;
+    private final Registry registry;
 
-    @Inject
-    public QueryRegistry(final EventStore eventStore, final EventBus eventBus, final Executor executor, final Lock lock) {
+    EventDispatcher(final EventStore eventStore,
+                    final EventBus eventBus,
+                    final Executor executor,
+                    final Registry registry) {
+
         this.eventStore = eventStore;
         this.eventBus = eventBus;
         this.executor = executor;
-        this.lock = lock;
+        this.lock = new ReentrantLock();
+        this.registry = registry;
+
     }
 
-    private static long oldestSequence(Set<Sequential> handlers) {
+    private static long oldest(Set<Sequential> handlers) {
         return handlers
                 .stream()
-                .reduce(QueryRegistry::oldestQueryHandler)
-                .map(item -> item.sequenceId())
+                .reduce(EventDispatcher::compareSequenceId)
+                .map(Sequential::sequenceId)
                 .orElse(0L);
     }
 
-
-    private static Sequential oldestQueryHandler(Sequential a, Sequential b) {
-        if (a.sequenceId() < b.sequenceId()) {
-            return a;
-        } else {
-            return b;
-        }
-    }
-
-    public void register(Sequential sequential) {
-        if (registrars.contains(sequential) && LOGGER.isLoggable(Level.INFO)) {
-            LOGGER.log(Level.INFO, "handler already registered", sequential);
-        }
-        registrars.add(sequential);
-    }
-
-    public void syncAll() {
-        final long sequenceId = eventStore.sequenceId();
-        if (!outOfSyncHandlers(sequenceId).isEmpty()) {
-            syncBatched(sequenceId, BATCH_SIZE);
-        }
+    private static Sequential compareSequenceId(Sequential a, Sequential b) {
+        return (a.sequenceId() < b.sequenceId()) ? a : b;
     }
 
     public void listenForEvents() {
-        executor.execute(Executors.defaultThreadFactory().newThread(new Consumer()));
+        executor.execute(Executors.defaultThreadFactory().newThread(new EventDispatcher.Consumer()));
         eventBus.register(this);
     }
 
@@ -112,8 +79,8 @@ public class QueryRegistry {
              * after acquiring the lock validate again if there are any out of sync handlers
              * they might have been updated meanwhile
              */
-            final Set<Sequential> handlers = outOfSyncHandlers(storeSequenceId);
-            syncBatched(handlers, storeSequenceId, oldestSequence(handlers), limit);
+            final Set<Sequential> handlers = outOfSync(storeSequenceId);
+            syncBatched(handlers, storeSequenceId, oldest(handlers), limit);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "cannot syncBatched events", e);
         } finally {
@@ -121,7 +88,7 @@ public class QueryRegistry {
         }
     }
 
-    private void syncBatched(Set<Sequential> handlers, long storeSequenceId, long sequenceId, int limit) {
+    private void syncBatched(Set<Sequential> sequentials, long storeSequenceId, long sequenceId, int limit) {
         long total = storeSequenceId - sequenceId;
         for (long offset = sequenceId; offset < total; offset += limit) {
             final long current = offset;
@@ -130,8 +97,8 @@ public class QueryRegistry {
                 LOGGER.log(Level.INFO, String.format("fetching events offset:%d (limit:%d)", offset, chunkSize));
             }
             final List<DomainEvent> events = eventStore.getEvents(offset, chunkSize);
-            handlers.parallelStream()
-                    .forEach(entry -> syncHandler(entry, current, events));
+            sequentials.parallelStream()
+                    .forEach(entry -> sync(entry, current, events));
         }
 
         if (LOGGER.isLoggable(Level.INFO)) {
@@ -139,23 +106,29 @@ public class QueryRegistry {
         }
     }
 
-    private void syncHandler(Sequential handler, long offset, List<DomainEvent> events) {
+    private void sync(Sequential sequential, long offset, List<DomainEvent> events) {
         final int size = events.size();
-        final int start = (int) ((handler.sequenceId() - offset));
+        final int start = (int) ((sequential.sequenceId() - offset));
         if (start >= size) {
             return;
         }
         events.subList(start, size)
-                .stream()
-                .forEach(event -> EventDelegator.when(handler, event.getPayload()));
-        handler.synced(offset + size);
+                .forEach(event -> EventDelegator.when(sequential, event.getPayload()));
+        sequential.synced(offset + size);
     }
 
-    // @fixme we can make this static by providing the registrars
-    private Set<Sequential> outOfSyncHandlers(long storeSequenceId) {
-        return registrars
+    public void syncAll() {
+        final long sequenceId = eventStore.sequenceId();
+        if (!outOfSync(sequenceId).isEmpty()) {
+            syncBatched(sequenceId, BATCH_SIZE);
+        }
+    }
+
+    // @fixme we can make this static by providing the queries
+    private Set<Sequential> outOfSync(long sequenceId) {
+        return registry.queries()
                 .stream()
-                .filter(item -> item.sequenceId() < storeSequenceId)
+                .filter(item -> item.sequenceId() < sequenceId)
                 .collect(Collectors.toSet());
     }
 
@@ -166,7 +139,7 @@ public class QueryRegistry {
                 try {
                     final DomainEvent event = eventQueue.take();
                     Optional.ofNullable(tryDelegate(event))
-                            .ifPresent(throwables -> delegateThrowables(throwables));
+                            .ifPresent(this::delegateThrowables);
                 } catch (InterruptedException e) {
                     if (LOGGER.isLoggable(Level.WARNING)) {
                         LOGGER.log(Level.WARNING, "cannot get event from queue", e);
@@ -176,7 +149,7 @@ public class QueryRegistry {
         }
 
         private void delegateThrowables(Set<Throwable> throwables) {
-            throwables.forEach(throwable -> registrars
+            throwables.forEach(throwable -> registry.queries()
                     .parallelStream()
                     .forEach(handler -> EventDelegator.when(handler, throwable)));
         }
@@ -194,7 +167,8 @@ public class QueryRegistry {
             // so we need a method to indicate that we need to lockEventProcessing
             // which can be called in listenForEvents
             final Set<Throwable> throwables = new CopyOnWriteArraySet<>();
-            registrars.parallelStream()
+            registry.queries()
+                    .parallelStream()
                     .forEach(handler -> {
                         try {
                             EventDelegator.when(handler, event.getPayload());
@@ -205,5 +179,4 @@ public class QueryRegistry {
             return throwables.isEmpty() ? null : throwables;
         }
     }
-
 }

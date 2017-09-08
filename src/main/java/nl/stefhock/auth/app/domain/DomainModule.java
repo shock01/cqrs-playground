@@ -3,8 +3,8 @@ package nl.stefhock.auth.app.domain;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import nl.stefhock.auth.cqrs.application.EventMapper;
-import nl.stefhock.auth.cqrs.infrastructure.jackson.JacksonEventMapper;
+import nl.stefhock.auth.cqrs.application.EventCodec;
+import nl.stefhock.auth.cqrs.infrastructure.javax.json.JsonEventCodec;
 
 /**
  * Created by hocks on 24-7-2017.
@@ -18,7 +18,7 @@ public class DomainModule extends AbstractModule {
     @Provides
     @Singleton
     @SuppressWarnings("unused")
-    EventMapper eventMapper() {
-        return new JacksonEventMapper();
+    EventCodec eventCodec() {
+        return new JsonEventCodec();
     }
 }

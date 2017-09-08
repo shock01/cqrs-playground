@@ -2,11 +2,11 @@ package nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql;
 
 
 import nl.stefhock.auth.cqrs.application.EventBus;
-import nl.stefhock.auth.cqrs.application.EventMapper;
+import nl.stefhock.auth.cqrs.application.EventCodec;
 import nl.stefhock.auth.cqrs.domain.aggregates.Aggregate;
 import nl.stefhock.auth.cqrs.domain.aggregates.AggregateFactory;
 import nl.stefhock.auth.cqrs.domain.events.DomainEvent;
-import nl.stefhock.auth.cqrs.domain.events.EventPayload;
+import nl.stefhock.auth.cqrs.domain.events.Event;
 import nl.stefhock.auth.cqrs.infrastructure.AggregateRepository;
 import nl.stefhock.auth.cqrs.infrastructure.EntityConcurrencyException;
 import nl.stefhock.auth.cqrs.infrastructure.EntityStoreException;
@@ -50,16 +50,16 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
 
     private final EventBus eventBus;
 
-    private final EventMapper eventMapper;
+    private final EventCodec eventCodec;
 
     @Inject
     public PostgreSQLEventStore(final DataSource dataSource,
                                 final AggregateFactory factory,
-                                final EventMapper eventMapper,
+                                final EventCodec eventCodec,
                                 final EventBus eventBus) {
         this.dataSource = dataSource;
         this.factory = factory;
-        this.eventMapper = eventMapper;
+        this.eventCodec = eventCodec;
         this.eventBus = eventBus;
     }
 
@@ -71,7 +71,7 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
             }
             while (resultSet.next()) {
                 final String eventType = resultSet.getString("eventType");
-                final EventPayload payload = eventMapper.toEvent(resultSet.getBytes("data"), EventPayload.class);
+                final Event payload = eventCodec.decodeEvent(resultSet.getBytes("data"), Event.class);
                 events.add(new DomainEvent.Builder()
                         .aggregateId(resultSet.getString("aggregateId"))
                         .sequence(resultSet.getLong("sequence"))
@@ -90,7 +90,7 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
     public void save(final Aggregate aggregate) {
         final String aggregateType = aggregate.getClass().getName();
         final String aggregateId = aggregate.getId();
-        final List<Object> events = aggregate.getUncommittedEvents();
+        final List<Event> events = aggregate.getUncommittedEvents();
         final int totalEvents = events.size();
         final int version = aggregate.getVersion() - totalEvents;
 
@@ -100,14 +100,14 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
             connection.setAutoCommit(false);
             int nextVersion = version;
             try (final PreparedStatement statement = connection.prepareStatement(INSERT_SQL)) {
-                for (final Object event : events) {
+                for (final Event event : events) {
                     nextVersion = ++nextVersion;
                     statement.setString(1, aggregateId);
                     statement.setString(2, aggregateType);
-                    statement.setString(3, event.getClass().getSimpleName());
+                    statement.setString(3, event.eventType());
                     statement.setDate(4, new java.sql.Date(new Date().getTime()));
                     statement.setInt(5, nextVersion);
-                    statement.setBytes(6, eventMapper.toBytes(event));
+                    statement.setBytes(6, eventCodec.encodeEvent(event));
                     statement.addBatch();
                 }
                 statement.executeBatch();
@@ -125,7 +125,7 @@ public class PostgreSQLEventStore implements AggregateRepository, EventStore {
         getEventsForStream(aggregateId, version, limit).forEach(eventBus::post);
     }
 
-    private void verifyVersion(final Aggregate aggregate, final List<Object> events) {
+    private void verifyVersion(final Aggregate aggregate, final List<Event> events) {
         try (Connection connection = dataSource.getConnection()) {
             final String aggregateType = aggregate.getClass().getName();
             final int originalVersion = aggregate.getVersion() - events.size() + 1;

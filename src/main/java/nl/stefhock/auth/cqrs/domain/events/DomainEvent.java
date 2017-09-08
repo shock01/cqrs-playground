@@ -1,24 +1,22 @@
 package nl.stefhock.auth.cqrs.domain.events;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+
 /**
  * Created by hocks on 19-7-2017.
- *
- * @FIXME its bad that domainEvent is serializable however domainEvent
- * will get payload and then its resolved
- * <p>
- * should be DomainEvent<T> where T is in this concept AuthEvent...or any event
  */
-@JsonDeserialize(builder = DomainEvent.Builder.class)
 public final class DomainEvent {
 
     private final String type;
     private final String aggregateId;
-    private final Long sequence;
+    private final long sequence;
     private final long timestamp;
-    private EventPayload payload;
+    private Event payload;
 
     private DomainEvent(Builder builder) {
         aggregateId = builder.aggregateId;
@@ -40,11 +38,11 @@ public final class DomainEvent {
 
 
     @SuppressWarnings("unused")
-    public Long getSequence() {
+    public long getSequence() {
         return sequence;
     }
 
-    public EventPayload getPayload() {
+    public Event getPayload() {
         return payload;
     }
 
@@ -53,12 +51,33 @@ public final class DomainEvent {
         return type;
     }
 
-    @JsonPOJOBuilder(withPrefix = "")
+    @Override
+    public String toString() {
+        return "DomainEvent{" +
+                "eventType='" + type + '\'' +
+                ", aggregateId='" + aggregateId + '\'' +
+                ", sequence=" + sequence +
+                ", timestamp=" + timestamp +
+                ", payload=" + payload +
+                '}';
+    }
+
+    @JsonIgnore
+    public JsonObject toJSON() {
+        return Json.createObjectBuilder()
+                .add("aggregateId", aggregateId)
+                .add("eventType", type)
+                .add("sequence", sequence)
+                .add("timestamp", timestamp)
+                .add("payload", payload.toJSON())
+                .build();
+    }
+
     public static class Builder {
         private String aggregateId;
         private long timestamp;
-        private Long sequence;
-        private EventPayload payload;
+        private long sequence;
+        private Event payload;
         private String type;
 
         public Builder aggregateId(String aggregateId) {
@@ -76,7 +95,7 @@ public final class DomainEvent {
             return this;
         }
 
-        public Builder payload(EventPayload payload) {
+        public Builder payload(Event payload) {
             this.payload = payload;
             return this;
         }
@@ -90,15 +109,12 @@ public final class DomainEvent {
             return new DomainEvent(this);
         }
 
-        Builder from(DomainEvent source) {
-            aggregateId = source.aggregateId;
-            timestamp = source.timestamp;
-            sequence = source.sequence;
-            payload = source.payload;
-            type = source.type;
+        public Builder fromJson(JsonObject jsonObject) {
+            aggregateId = jsonObject.getString("aggregateId");
+            type = jsonObject.getString("eventType");
+            sequence = jsonObject.getInt("sequence");
+            timestamp = jsonObject.getInt("timestamp");
             return this;
         }
     }
-
-
 }
