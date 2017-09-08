@@ -28,14 +28,12 @@ public class CreateRegistrationHandler extends CommandHandler<CreateRegistration
 
     @Override
     public void execute(CreateRegistration command) {
-        final CreateRegistration.RegistrationInfo registrationInfo = command.getRegistration();
-        // can use the builder pattern here which is much stronger!!!
         final Id id = Id.from(command.getUuid());
         final Registration registration = new Registration();
-        registration.create(id, registrationInfo.getEmail(), registrationInfo.getSource());
+        registration.create(id, command.getEmail(), command.getSource());
         final String seed = passwordStrategy.seed();
-        int iterations = passwordStrategy.iterations();
-        final Optional<String> hash = passwordStrategy.hash(registrationInfo.getPassword(), seed, iterations);
+        final int iterations = passwordStrategy.iterations();
+        final Optional<String> hash = passwordStrategy.hash(command.getPassword(), seed, iterations);
 
         // @TODO handle not created password
         hash.ifPresent(value -> registration.setPassword(value, seed, iterations));

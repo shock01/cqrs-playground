@@ -1,5 +1,6 @@
 package nl.stefhock.auth.app.api.registrations;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import nl.stefhock.auth.app.domain.commands.CreateRegistration;
 import nl.stefhock.auth.app.application.queries.RegistrationView;
 import nl.stefhock.auth.app.application.queries.RegistrationsQuery;
@@ -8,6 +9,7 @@ import nl.stefhock.auth.cqrs.domain.Id;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.validation.executable.ValidateOnExecution;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -40,10 +42,10 @@ public class RegistrationResource {
     @POST
     //@ValidateOnExecution
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response register(final CreateRegistration.RegistrationInfo registration,
+    public Response register(final RegistrationInfo registration,
                              @Context UriInfo uriInfo) {
         final String uuid = Id.generate();
-        commandBus.execute(new CreateRegistration(uuid, registration));
+        commandBus.execute(new CreateRegistration(uuid, registration.getEmail(), registration.getPassword(), registration.getSource()));
         final UriBuilder builder = uriInfo.getAbsolutePathBuilder();
         builder.path(String.format("byId/%s", uuid));
         return Response.created(builder.build()).build();
@@ -78,6 +80,43 @@ public class RegistrationResource {
             return Response.ok().entity(registration.get()).build();
         } else {
             return Response.status(Response.Status.NOT_FOUND).build();
+        }
+    }
+
+    public static class RegistrationInfo {
+        @NotNull(message = "email required")
+        private final String email;
+
+        private final String password;
+
+        private final String source;
+
+        /**
+         * password is not required eg when a registration is done using a
+         * social network like Google
+         *
+         * @param email
+         * @param password
+         * @todo registration source should be added
+         */
+        public RegistrationInfo(final @JsonProperty("email") String email,
+                                final @JsonProperty("password") String password,
+                                final @JsonProperty("source") String source) {
+            this.email = email;
+            this.password = password;
+            this.source = source;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public String getSource() {
+            return source;
         }
     }
 }
