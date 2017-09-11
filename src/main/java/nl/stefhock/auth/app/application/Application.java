@@ -6,6 +6,9 @@ import javax.inject.Inject;
 
 /**
  * Created by hocks on 18-8-2017.
+ *
+ * FIXME i dont like this class ? should it be part of Main ???
+ * its just another class that does nothing
  */
 public class Application {
 

@@ -1,16 +1,15 @@
-package nl.stefhock.auth.app.api.registrations;
+package nl.stefhock.auth.app.application.registrations;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import nl.stefhock.auth.app.application.registrations.queries.RegistrationView;
+import nl.stefhock.auth.app.application.registrations.queries.RegistrationsQuery;
 import nl.stefhock.auth.app.domain.commands.CreateRegistration;
-import nl.stefhock.auth.app.application.queries.RegistrationView;
-import nl.stefhock.auth.app.application.queries.RegistrationsQuery;
 import nl.stefhock.auth.cqrs.application.CommandBus;
 import nl.stefhock.auth.cqrs.domain.Id;
+import org.hibernate.validator.constraints.Email;
 
 import javax.inject.Inject;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.executable.ValidateOnExecution;
+import javax.validation.constraints.Size;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.util.List;
@@ -40,6 +39,7 @@ public class RegistrationResource {
      * @return
      */
     @POST
+    //@FIXME
     //@ValidateOnExecution
     @Consumes(MediaType.APPLICATION_JSON)
     public Response register(final RegistrationInfo registration,
@@ -84,9 +84,10 @@ public class RegistrationResource {
     }
 
     public static class RegistrationInfo {
-        @NotNull(message = "email required")
+        @Email(message = "email required")
         private final String email;
 
+        @Size(min = 6)
         private final String password;
 
         private final String source;

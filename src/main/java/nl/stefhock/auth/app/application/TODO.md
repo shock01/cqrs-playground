@@ -1,0 +1,2 @@
+- use package by feature and not by layer
+- implement sagas

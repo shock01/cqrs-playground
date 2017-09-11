@@ -1,6 +1,10 @@
 package nl.stefhock.auth.app.domain.commands;
 
 import nl.stefhock.auth.cqrs.application.Command;
+import org.hibernate.validator.constraints.Email;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * Created by hocks on 5-7-2017.
@@ -8,7 +12,10 @@ import nl.stefhock.auth.cqrs.application.Command;
 public class CreateRegistration extends Command {
 
     private final String uuid;
+    @Email
     private final String email;
+    @NotNull
+    @Size(min = 6)
     private final String password;
     private final String source;
 

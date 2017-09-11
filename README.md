@@ -4,6 +4,7 @@
 - http://cqrs.nu/tutorial/cs/03-read-models
 - https://github.com/google/protobuf-gradle-plugin
 - https://github.com/phensley/protobuf-vs-jackson
+- https://msdn.microsoft.com/en-us/library/jj591569.aspx
 
 These challenges could be solved by using persistent, transactional storage:
 

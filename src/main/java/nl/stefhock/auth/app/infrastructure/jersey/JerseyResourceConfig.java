@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.inject.Injector;
 import nl.stefhock.auth.app.api.HealthResource;
-import nl.stefhock.auth.app.api.registrations.RegistrationResource;
+import nl.stefhock.auth.app.application.registrations.RegistrationResource;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.ServiceLocatorProvider;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -36,6 +36,8 @@ public class JerseyResourceConfig extends ResourceConfig {
         // resources
         register(HealthResource.class);
         register(RegistrationResource.class);
+        // @TODO add custom exception handlers for proper json responses
+        // @TODO handle jackson event mapping handler
     }
 
     public static ResourceConfig newResourceConfig(Injector injector) {

@@ -1,4 +1,4 @@
-package nl.stefhock.auth.app.application.strategies;
+package nl.stefhock.auth.app.application.registrations.strategies;
 
 import com.google.common.hash.HashCode;
 

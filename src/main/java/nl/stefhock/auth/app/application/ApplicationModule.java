@@ -3,18 +3,20 @@ package nl.stefhock.auth.app.application;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.*;
 import com.google.inject.multibindings.MultibindingsScanner;
+import nl.stefhock.auth.app.application.registrations.RegistrationsModule;
 import nl.stefhock.auth.app.domain.DomainModule;
 import nl.stefhock.auth.app.infrastructure.InfrastructureModule;
 import nl.stefhock.auth.cqrs.application.*;
 import nl.stefhock.auth.cqrs.infrastructure.EventStore;
 
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by hocks on 24-7-2017.
@@ -60,5 +62,12 @@ public class ApplicationModule extends AbstractModule {
         queries.forEach(registry::register);
         handlers.forEach(registry::register);
         return registry;
+    }
+
+    @Provides
+    @Singleton
+    public Validator validator() {
+        final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        return factory.getValidator();
     }
 }

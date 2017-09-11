@@ -21,6 +21,7 @@ import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.DbMigration;
 import nl.stefhock.auth.cqrs.infrastructure.jdbc.postgresql.PostgreSQLEventStore;
 import nl.stefhock.auth.cqrs.infrastructure.quava.GuavaEventBus;
 
+import javax.validation.Validator;
 import java.util.Properties;
 
 /**
@@ -32,7 +33,12 @@ public class InfrastructureModule extends AbstractModule {
         bind(PostgreSQLEventStore.class).in(Singleton.class);
         bind(AggregateRepository.class).to(PostgreSQLEventStore.class);
         bind(EventStore.class).to(PostgreSQLEventStore.class);
-        bind(CommandBus.class).in(Scopes.SINGLETON);
+    }
+
+    @Provides
+    @Singleton
+    public CommandBus commandBus(Validator validator) {
+        return new CommandBus(validator);
     }
 
     @Provides

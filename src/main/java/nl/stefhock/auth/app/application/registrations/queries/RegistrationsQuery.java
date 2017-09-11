@@ -1,4 +1,4 @@
-package nl.stefhock.auth.app.application.queries;
+package nl.stefhock.auth.app.application.registrations.queries;
 
 import nl.stefhock.auth.app.domain.events.RegistrationCreated;
 import nl.stefhock.auth.cqrs.application.Query;
@@ -106,9 +106,6 @@ public class RegistrationsQuery implements Query {
 
     @SuppressWarnings("unused")
     void when(RegistrationCreated event) {
-        byEmail(event.email()).ifPresent((view) -> {
-            throw new AggregateExistsException(event.aggregateId(), event);
-        });
         readModel.addOrUpdate(new RegistrationView(event.email(), Date.from(event.date().toInstant()), event.aggregateId()));
     }
 
